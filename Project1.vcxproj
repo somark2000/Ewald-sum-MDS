@@ -128,6 +128,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="datatypes.cpp" />
+    <ClCompile Include="functions.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -135,6 +136,8 @@
     <ClInclude Include="constants.h" />
     <ClInclude Include="datatypes.h" />
     <ClInclude Include="ewald.h" />
+    <ClInclude Include="functions.h" />
+    <ClInclude Include="input_output.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
