@@ -1,4 +1,6 @@
-﻿#include <iostream>
+﻿#pragma warning (disable : 4996)
+
+#include <iostream>
 #include <time.h>
 #include "datatypes.h"
 #include "basetype.h"
@@ -7,16 +9,16 @@
 #include "input_output.h"
 
 int main() {
-	Atom* atoms;
-	real dt, ELJ, Ec, Rcut, t, Temp;
-	int iopRun, istep, natm, nstep, nout;
-	real CPUtime, CPUstep, CPUleft;
+	Atom* atoms = new Atom();
+	real dt=(double) 0e0, ELJ, Ec, Rcut = (double)0e0, t, Temp = (double)0e0;
+	int iopRun = 0, istep = 0, natm = 0, nstep = 0, nout=0;
+	real CPUtime = 0e0, CPUstep = 0e0, CPUleft = 0e0;
 	time_t CPUtime0;
 	const char* filePSF = "mdsim.psf";
 	const char* filePDB = "mdsim.pdb";
 	const char* filePAR = "mdsim.par";
 	const char* fileTrj = "mdsim_trj.pdb";
-	Input0(iopRun, Rcut, Temp, dt, nstep, nout);
+	Input0(iopRun, (real) Rcut, (real) Temp, (real) dt, nstep, nout);
 	natm = GetDimPSF0(filePSF);
 	//atoms = Vec<Atom>(l, natm);
 	// read data from PSF, PDB, and PAR files

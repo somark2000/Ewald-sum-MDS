@@ -21,11 +21,11 @@ VecR3::~VecR3()
 
 Atom::Atom()
 {
-	strcpy(name, "");
-	strcpy(symb, "");
-	strcpy(type, "");
-	strcpy(resi, "");
-	strcpy(segm, "");
+	strcpy_s(name, "");
+	strcpy_s(symb, "");
+	strcpy_s(type, "");
+	strcpy_s(resi, "");
+	strcpy_s(segm, "");
 	ires = 0;
 	mass = 0;
 	chrg = 0;
@@ -41,11 +41,11 @@ Atom::Atom()
 
 Atom::Atom(char* name1, char* symb1, char* type1, char* resi1, long ires1, char* segm1, real mass1, real chrg1, real occp1, real beta1, real epsLJ1, real RminLJ1, VecR3 r1, VecR3 v1, VecR3 a1, VecR3 f1)
 {
-	strcpy(name, name1);
-	strcpy(symb, symb1);
-	strcpy(type, type1);
-	strcpy(resi, resi1);
-	strcpy(segm, segm1);
+	strcpy_s(name, name1);
+	strcpy_s(symb, symb1);
+	strcpy_s(type, type1);
+	strcpy_s(resi, resi1);
+	strcpy_s(segm, segm1);
 	ires = ires1;
 	mass = mass1;
 	chrg = chrg1;
