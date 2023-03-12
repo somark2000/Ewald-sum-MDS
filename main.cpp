@@ -7,6 +7,7 @@
 #include "constants.h"
 #include "functions.h"
 #include "input_output.h"
+#include "Memalloc.h"
 
 int main() {
 	Atom* atoms = new Atom();
@@ -18,9 +19,9 @@ int main() {
 	const char* filePDB = "mdsim.pdb";
 	const char* filePAR = "mdsim.par";
 	const char* fileTrj = "mdsim_trj.pdb";
-	Input0(iopRun, (real) Rcut, (real) Temp, (real) dt, nstep, nout);
+	//Input(iopRun, Rcut, Temp, dt, nstep, nout);
 	natm = GetDimPSF0(filePSF);
-	//atoms = Vec<Atom>(l, natm);
+	atoms = Vec<Atom>(1, natm);
 	// read data from PSF, PDB, and PAR files
 	ReadPSF0(filePSF, atoms, natm);
 	ReadPDB0(filePDB, atoms, natm);

@@ -139,6 +139,7 @@
     <ClInclude Include="ewald.h" />
     <ClInclude Include="functions.h" />
     <ClInclude Include="input_output.h" />
+    <ClInclude Include="Memalloc.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

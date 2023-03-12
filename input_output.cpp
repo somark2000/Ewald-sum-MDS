@@ -22,7 +22,7 @@ int GetDimPDB(const char* file) {
 	strcpy_s(string, "");
 	while (!strstr(string, "END")) { // while not finding "END"
 		fgets(line, sizeof(line), pdb); // get line
-		sscanf_s(line, "%s", string); // first string in line
+		sscanf_s(line, "%s ", string); // first string in line
 		if (!strcmp(string, "ATOM") || !strcmp(string, "HETATM")) n += 1;
 	}
 	fclose(pdb);
@@ -145,7 +145,7 @@ void ReadPAR0(const char* file, Atom atoms[], int natm) {
 }
 
 // Reads input
-void Input0(int &iopRun, real &Rcut, real &Temp, real &dt, int &nstep, int &nout) {
+void Input(int &iopRun, double &Rcut, double &Temp, double &dt, int &nstep, int &nout) {
 	FILE* in;
 	in = fopen("mdsim.dat", "r");
 	if (in == NULL) {
