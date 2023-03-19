@@ -45,6 +45,55 @@ void Forces(Atom atoms[], int n, real Rcut, real& ELJ) {
 	}
 }
 
+// Returns the non-bonded forces acting on atoms and the corresponding energy.
+void Forces1(Atom atoms[], int natm, int PBC, VecR3 Box, real Rcut, real& ELJ,	real &virial)
+	// Rcut - cutoff distance for short-range interactions
+	// ELJ - Lennard-Jones energy
+{
+	real Box2x, Box2y, Box2z;
+	real fpr, Rcut2, Rr2, Rr6, rx, ry, rz, r2;
+	real epsLJ, RminLJ;
+	int iatm, jatm;
+	Rcut2 = Rcut * Rcut;
+	Box2x = Box.x / 2e0; // simulation box half-size
+	Box2y = Box.y / 2e0;
+	Box2z = Box.z / 2e0;
+	for (iatm = 1; iatm <= natm; iatm++) atoms[iatm].f = { 0e0, 0e0, 0e0 };
+	
+	//Non-Bounded interaction
+	ELJ = 0e0;
+	virial = 0e0;
+	for (iatm = 1; iatm < natm; iatm++) {
+		for (jatm = iatm + 1; jatm <= natm; jatm++) {
+			rx = atoms[iatm].r.x - atoms[jatm].r.x; // interatomic distance
+			ry = atoms[iatm].r.y - atoms[jatm].r.y;
+			rz = atoms[iatm].r.z - atoms[jatm].r.z;
+			if (PBC) { // minimum image criterion
+				if (rx > Box2x) rx -= Box.x; else if (rx < -Box2x) rx += Box.x;
+				if (ry > Box2y) ry -= Box.y; else if (ry < -Box2y) ry += Box.y;
+				if (rz > Box2z) rz -= Box.z; else if (rz < -Box2z) rz += Box.z;
+				fpr = 0e0; // initialize f/r
+				r2 = rx * rx + ry * ry + rz * rz; // squared interatomic distance
+				if (r2 < Rcut2) { // short-range Lennard-Jones interactions
+					// Lorentz-Berthelot mixing rules: RminLJ = Rmin / 2, epsLJ = sqrt(eps)
+					RminLJ = atoms[iatm].RminLJ + atoms[jatm].RminLJ;
+					epsLJ = atoms[iatm].epsLJ * atoms[jatm].epsLJ;
+					Rr2 = RminLJ * RminLJ / r2;
+					Rr6 = Rr2 * Rr2 * Rr2;
+					ELJ += epsLJ * Rr6 * (Rr6 - 2e0);
+					fpr = 12e0 * epsLJ * Rr6 * (Rr6 - 1e0) / r2; // f/r
+				}
+				if (fpr) {
+					atoms[iatm].f.x += fpr * rx; atoms[jatm].f.x -= fpr * rx;
+					atoms[iatm].f.y += fpr * ry; atoms[jatm].f.y -= fpr * ry;
+					atoms[iatm].f.z += fpr * rz; atoms[jatm].f.z -= fpr * rz;
+					virial += fpr * r2; // add virial term
+				}
+			}
+		}
+	}
+}
+
 //time propagation
 void Verlet(Atom atoms[], int natm, real Rcut, real dt, real& ELJ, real& Ec) {
 	/*
@@ -80,6 +129,66 @@ void Verlet(Atom atoms[], int natm, real Rcut, real dt, real& ELJ, real& Ec) {
 			Ec *= fkin / 2e0;
 		}
 	}
+}
+
+void Verlet1(Atom atoms[], int natm, int PBC, VecR3 Box, real Rcut, real dt, real& ELJ, real& Ekin, real& virial)
+	// MD propagator based on the velocity Verlet method.
+	// Rcut - cutoff distance for short-range interactions
+	// dt - time step
+	// ELJ - Lennard-Jones energy
+	// Ekin - kinetic energy
+{
+	real Box2x, Box2y, Box2z, dt2, v2;
+	int iatm;
+	dt2 = dt / 2e0;
+	Box2x = Box.x / 2e0; // simulation box half-size
+	Box2y = Box.y / 2e0;
+	Box2z = Box.z / 2e0;
+	for (iatm = 1; iatm <= natm; iatm++) { // PREDICTOR STEP
+		//v(t+dt/2)
+		atoms[iatm].v.x += dt2 * atoms[iatm].a.x;
+		atoms[iatm].v.y += dt2 * atoms[iatm].a.y;
+		atoms[iatm].v.z += dt2 * atoms[iatm].a.z;
+		//r(t+dt)
+		atoms[iatm].r.x += dt * atoms[iatm].v.x;
+		atoms[iatm].r.y += dt * atoms[iatm].v.y;
+		atoms[iatm].r.z += dt * atoms[iatm].v.z;
+	}
+	if (PBC) //wrap coordinates back into the original box
+	{
+		for (iatm = 1; iatm < natm; iatm++)
+		{
+			if (atoms[iatm].r.x > Box2x) atoms[iatm].r.x -= Box.x;
+			else if (atoms[iatm].r.x < -Box2x) atoms[iatm].r.x += Box.x;
+			if (atoms[iatm].r.y > Box2y) atoms[iatm].r.y -= Box.y;
+			else if (atoms[iatm].r.y < -Box2y) atoms[iatm].r.y += Box.y;
+			if (atoms[iatm].r.z > Box2z) atoms[iatm].r.z -= Box.z;
+			else if (atoms[iatm].r.z < -Box2z) atoms[iatm].r.z += Box.z;
+		}
+	}
+	
+	//Update forces
+	Forces1(atoms, natm, PBC, Box, Rcut, ELJ, virial);
+	
+	//Correction step
+	Ekin = 0e0;
+	for (iatm = 1; iatm < natm; iatm++) {
+		atoms[iatm].a.x = facc * atoms[iatm].f.x / atoms[iatm].mass;
+		atoms[iatm].a.y = facc * atoms[iatm].f.y / atoms[iatm].mass;
+		atoms[iatm].a.z = facc * atoms[iatm].f.z / atoms[iatm].mass;
+
+		atoms[iatm].v.x += dt2 * atoms[iatm].a.x;
+		atoms[iatm].v.y += dt2 * atoms[iatm].a.y;
+		atoms[iatm].v.z += dt2 * atoms[iatm].a.z;
+
+		v2 = atoms[iatm].v.x * atoms[iatm].v.x +
+			atoms[iatm].v.y * atoms[iatm].v.y +
+			atoms[iatm].v.z * atoms[iatm].v.z;
+
+		atoms[iatm].beta = v2; // squared velocity for velocity distribution
+		Ekin += atoms[iatm].mass * v2;
+	}
+	Ekin *= fkin / 2e0;
 }
 
 //Resets the velocities and accelerations of all the atoms  to 0
@@ -135,4 +244,20 @@ void Heat(Atom atoms[], int n, real Ec) {
 		atoms[i].v.z -= vCM.z;
 		Vrescal(atoms, n, c);
 	}
+}
+
+
+// Rescales velocities and total kinetic energy using the Berendsen thermostat
+void Thermostat(Atom atoms[], int natm, real Temp, real tauT, real dt, real& Ekin)
+{
+	real f, Tkin;
+	int iatm;
+	Tkin = Ekin / (1.5e0 * natm * kB); // kinetic temperature
+	f = sqrt(1e0 + (dt / tauT) * (Temp / Tkin - 1e0)); // scaling factor
+	for (iatm = 1; iatm <= natm; iatm++) {
+		atoms[iatm].v.x *= f;
+		atoms[iatm].v.y *= f;
+		atoms[iatm].v.z *= f;
+	}
+	Ekin *= f * f;
 }

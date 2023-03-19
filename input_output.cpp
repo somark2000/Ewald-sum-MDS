@@ -73,6 +73,24 @@ void WritePDB0(const char* file, Atom atoms[], int n, const char* mode) {
 	fclose(pdb);
 }
 
+// Writes data from a list of natm atoms to a pdb file (mode = "w" or "a").
+void WritePDB1(const char* file, Atom atoms[], int natm, VecR3 Box, const char* mode)
+{
+	FILE* pdb;
+	int iatm;
+	const char* strfrm = "ATOM % 5d % -4s % -4s % ls % 4d % 8.3f % 8.3f % 8.3f % 6.2f % 6.2f % -2s\n";
+	pdb = fopen(file, mode);
+	if (Box.x * Box.y * Box.z != 0e0)
+		fprintf(pdb, "CRYST1%9.3f%9.3f%9.3f 90.00 90.00 90.00\n", Box.x, Box.y, Box.z);
+	for (iatm = 1; iatm <= natm; iatm++)
+		fprintf(pdb, strfrm, iatm, atoms[iatm].name, atoms[iatm].resi,
+			atoms[iatm].segm, atoms[iatm].ires,
+			atoms[iatm].r.x, atoms[iatm].r.y, atoms[iatm].r.z,
+			atoms[iatm].occp, atoms[iatm].beta, atoms[iatm].symb);
+	fprintf(pdb, "END\n");
+	fclose(pdb);
+}
+
 // Retrieves the main dimensions from a psf file
 int GetDimPSF0(const char* file)
 {
@@ -159,6 +177,24 @@ void Input(int &iopRun, double &Rcut, double &Temp, double &dt, int &nstep, int 
 	fclose(in);
 }
 
+
+void Input1(int &iopRun, int& PBC, real& Lbox, real& Rcut, real& Temp, real &tauT, real& dt, int& nstep, int &nout) {
+	FILE* in;
+	in = fopen("mdsim.dat", "r");
+	if (in == NULL) { printf("MDsim.dat missing !\n"); getch(); exit(1); }
+	fscanf(in, "%*15c%d", &iopRun); // run type
+	fscanf(in, "%*15c%d", & PBC); // != 0 - periodic boundary conditions
+	fscanf(in, "%*15c%lf", &Lbox); // box size (A)
+	fscanf(in, "%*15c%lf", &Rcut); // cutoff (A)
+	fscanf(in, "%*15c%lf", &Temp); // kinetic temperature (K)
+	fscanf(in, "%*15c%lf", &tauT); // thermostat coupling constant (ps)
+	fscanf(in, "%*15c%lf", &dt); // integration time step (ps)
+	fscanf(in, "%*15c%d", &nstep); // no. of time steps
+	fscanf(in, "%*15c%d", &nout); // no. of time steps between output
+	fclose(in);
+}
+	
+
 // Prints main output
 void Output0(int istep, int iopRun, int natm, real Rcut, real Temp, real dt, int nstep, int nouț, real ELJ, real Ekin) {
 	FILE* out;
@@ -179,4 +215,26 @@ void Output0(int istep, int iopRun, int natm, real Rcut, real Temp, real dt, int
 	Etot = ELJ + Ekin;
 	fprintf_s(out, "%7d%10.4f%15.4f%15.4f%15.4f\n",istep, istep * dt, Etot, ELJ, Ekin);
 	fclose(out);
+}
+
+void Outputl(int istep, int iopRun, int natm, int PBC, real Lbox, real Rcut, real Temp, real tauT, real dt, int nstep, int nout, real ELI, real Ekin, real Tkin, real Pres, real virial)
+{
+	FILE* out;
+	real Etot;
+	if (istep == 0) {
+		out = fopen("mdsim.out", "w");
+		fprintf(out, " iopRun =   %6d\n", iopRun);
+		fprintf(out, " PBC =      %6d\n", PBC);
+		fprintf(out, " Lbox (A) = %6.21f\n", Lbox);
+		fprintf(out, " Rcut(A) =  %6.21f\n", Rcut);
+		fprintf(out, " Temp (K) = %6.21f\n", Temp);
+		fprintf(out, " tauT(pc) = %6.21f\n", tauT);
+		fprintf(out, " dt (ps) =  %6g\n", dt);
+		fprintf(out, " nstep =    %6d\n", nstep);
+		fprintf(out, " nout =     %6d\n", nout);
+
+		Etot - ELI + Ekin;
+		fprintf(out, "%7d%10.4f%l5.4f%l5.4f%l5.4f%l5.4f%l5.4f%l5.4f\n", istep, istep * dt, Etot, ELI, Ekin, Tkin, Pres, virial);
+		fclose(out);
+	}
 }
