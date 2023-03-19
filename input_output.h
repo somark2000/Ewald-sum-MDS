@@ -19,6 +19,7 @@ int GetDimPSF0(const char* file);
 void ReadPSF0(const char* file, Atom atoms[], int natm);
 void ReadPAR0(const char* file, Atom atoms[], int natm);
 void Input(int SiopRun, double Rcut, double Temp, real dt, int mstep, int nout);
+void Input1(int& iopRun, int& PBC, real& Lbox, real& Rcut, real& Temp, real& tauT, real& dt, int& nstep, int& nout);
 void Output0(int istep, int iopRun, int natm, real Rcut, real Temp, real dt, int nstep, int nouț, real ELJ, real Ec);
-void Outputl(int istep, int iopRun, int natm, int PBC, real Lbox, real Rcut, real Temp, real tauT, real dt, int nstep, int nout, real ELI, real Ekin, real Tkin, real Pres, real virial);
+void Output1(int istep, int iopRun, int natm, int PBC, real Lbox, real Rcut, real Temp, real tauT, real dt, int nstep, int nout, real ELI, real Ekin, real Tkin, real Pres, real virial);
 #endif // !input_output_h

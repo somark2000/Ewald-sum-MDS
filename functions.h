@@ -14,7 +14,7 @@
 
 //functions to be used
 void Forces(Atom atoms[], int n, real Rcut, real& ELJ);
-void Forcesl(Atom atoms[], int natm, int PBC, VecR3 Box, real Rcut, real& ELJ, real& virial);
+void Forces1(Atom atoms[], int natm, int PBC, VecR3 Box, real Rcut, real& ELJ, real& virial);
 void Verlet(Atom atoms[], int n, real Rcut, real dt, real& ELJ, real& Ec);
 void Verlet1(Atom atoms[], int natm, int PBC, VecR3 Box, real Rcut, real dt, real& ELJ, real& Ekin, real& virial);
 void ZeroVelAcc(Atom atoms[], int n);

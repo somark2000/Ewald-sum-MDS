@@ -25,3 +25,4 @@ const real bar = 1e5;
 const real facc = kcal / (NA * amu) * (ps * A)*(ps * A);
 const real fkin = 1e0 / facc;
 const real fcoul = e * e * NA / (4e0 * pi * eps0 * A * kcal);
+const real fpres = kcal/NA / (A * A * A * bar);

@@ -217,7 +217,7 @@ void Output0(int istep, int iopRun, int natm, real Rcut, real Temp, real dt, int
 	fclose(out);
 }
 
-void Outputl(int istep, int iopRun, int natm, int PBC, real Lbox, real Rcut, real Temp, real tauT, real dt, int nstep, int nout, real ELI, real Ekin, real Tkin, real Pres, real virial)
+void Output1(int istep, int iopRun, int natm, int PBC, real Lbox, real Rcut, real Temp, real tauT, real dt, int nstep, int nout, real ELI, real Ekin, real Tkin, real Pres, real virial)
 {
 	FILE* out;
 	real Etot;
@@ -233,7 +233,7 @@ void Outputl(int istep, int iopRun, int natm, int PBC, real Lbox, real Rcut, rea
 		fprintf(out, " nstep =    %6d\n", nstep);
 		fprintf(out, " nout =     %6d\n", nout);
 
-		Etot - ELI + Ekin;
+		Etot = ELI + Ekin;
 		fprintf(out, "%7d%10.4f%l5.4f%l5.4f%l5.4f%l5.4f%l5.4f%l5.4f\n", istep, istep * dt, Etot, ELI, Ekin, Tkin, Pres, virial);
 		fclose(out);
 	}
