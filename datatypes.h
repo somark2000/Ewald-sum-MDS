@@ -34,3 +34,30 @@ public:
 	Atom(char* name, char* symb, char* type, char* resi, long ires, char* segmreal,real mass, real chrg, real occp, real beta, real epsLl, real RminL3, VecR3 r, VecR3 v, VecR3 a, VecR3 f);
 	~Atom();
 };
+
+
+class Pair {
+public:
+	int indi, indj;
+	int indx;
+
+	Pair();
+	Pair(int indi, int indj, int indx);
+	~Pair();
+};
+
+class Bond {
+public:
+	char atmi[8], atmj[8];
+	int indi, indj;
+	int ityp;
+	int rigid;
+	real b0;
+	real Kb;
+	real len;
+	VecR3 unit;
+
+	Bond();
+	Bond(char* atomi, char* atomj, int indi, int indj, int ityp, int rigid, real b0, real Kb, real len, VecR3 unit);
+	~Bond();
+};

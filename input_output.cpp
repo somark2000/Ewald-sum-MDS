@@ -29,6 +29,23 @@ int GetDimPDB(const char* file) {
 	return n;
 }
 
+// Retrieves the main dimensions from a psf file
+int GetDimPSFl(const char* file, int ftnbnd) {
+	FILE* psf;
+	int natm;
+	char line[100];
+	psf = fopen(file, "r");
+	if (!psf) { printf("GetDimPSFl: input file missing!\n"); _getch(); exit(1); }
+	strcpy(line, ""); // search for header "INATOM"
+		while (!strstr(line, "INATOM")) fgets(line, sizeof(line), psf);
+			sscanf(line, "%d", &natm);
+	// search for header "IN3OND"
+	while (!strstr(line, "INBOND")) fgets(line, sizeof(line), psf);
+	sscanf(line, "%d", ftnbnd);
+	fclose(psf);
+	return natm;
+}
+
 // Reads data from a pdb file in a list of atoms.
 void ReadPDB0(const char* file, Atom atoms[], int n) {
 	FILE* pdb;
@@ -127,6 +144,36 @@ void ReadPSF0(const char* file, Atom atoms[], int n){
 		fclose(psf);
 	}
 
+void ReadPSF1(const char* file, Atom atoms[], int natm, Bond bnds[], int nbnd) {
+	FILE* psf;
+	int iatm, ibnd, _natm, _nbnd;
+	char line[100];
+	psf = fopen(file, "r");
+	if (!psf) { printf("ReadPSFl: input file missing!\n"); _getch(); exit(1); }
+	strcpy(line, ""); // ATOMS - scan for header "INATOM"
+	while (!strstr(line, "INATOM")) fgets(line, sizeof(line), psf); // get lines
+	sscanf(line, "%d", &_natm);
+	if (_natm != natm) {
+		printf("ReadPSFl: inconsistent natm I %i %i\n", natm, _natm); exit(2);
+	}
+	for (iatm = 1; iatm <= natm; iatm++) { // read a line for each atom
+		fscanf(psf, "%*ld %s %ld %s %s %s %lf %lf %*d",
+			atoms[iatm].segm, &atoms[iatm].ires, atoms[iatm].resi,
+			atoms[iatm].name, atoms[iatm].type, &atoms[iatm].chrg,
+			&atoms[iatm].mass);
+	}
+
+	//BONDS
+	while (!strstr(line, "INBOND")) fgets(line, sizeof(line), psf);
+	sscanf(line, "%d", &_nbnd);
+	if (_nbnd != nbnd) {
+		printf("ReadPSFl: inconsistent nbnd I %i %i\n", nbnd, _nbnd); exit(3);
+	}
+	for (ibnd = 1; ibnd <= nbnd; ibnd++)
+		fscanf(psf, "%d %d", &bnds[ibnd].indi, &bnds[ibnd].indj);
+	fclose(psf);
+}
+
 // Reads non-bonded force field parameters from a CHARMM-type file
 void ReadPAR0(const char* file, Atom atoms[], int natm) {
 	FILE* par;
@@ -160,6 +207,71 @@ void ReadPAR0(const char* file, Atom atoms[], int natm) {
 		}
 	}
 	fclose(par);
+}
+
+void ReadPAR1(const char* file, Atom atoms[], int natm, Bond bnds[], int nbnd) {
+	FILE* par;
+	int iatm, ibnd, jatm, found;
+	char line[100], str0[20], strl[20];
+	par = fopen(file, "r");
+	if (!par) printf("ReadPARl: input file missing!\n"); _getch(); exit(1);
+
+	// BONDS
+	for (ibnd = 1; ibnd <= nbnd; ibnd++) {
+		iatm = bnds[ibnd].indi; jatm = bnds[ibnd].indj;
+		rewind(par); // set pointer to beginning of file
+		strcpy(str0, "");
+		while (strcmp(str0, "BONDS")) { // skip lines up to "BONDS"
+			fgets(line, sizeof(line), par); // get line
+			sscanf(line, "%s", str0); // first string in line
+		}
+
+		found = 0; // start parsing
+		while (fgets(line, sizeof(line), par)) { // read remaining lines in file
+			sscanf(line, "%s", str0); // first string in line
+			// break if new section starts
+			if (!strcmp(str0, "ATOMS") || !strcmp(str0, "BONDS") || !strcmp(str0, "ANGLES") || !strcmp(str0, "DIHEDRALS") || !strcmp(str0, "IMPROPERS") || !strcmp(str0, "NONBONDED")) break;
+			sscanf(line, "%s %s", str0, strl); // check type match both ways
+			if ((!strcmp(atoms[iatm].type, str0) && !strcmp(atoms[jatm].type, strl)) || (!strcmp(atoms[iatm].type, strl) && !strcmp(atoms[jatm].type, str0))) {
+				sscanf(line, "%*s %*s %lf %lf", &bnds[ibnd].Kb, &bnds[ibnd].b0);
+				found = 1;
+				break;
+			}
+		}
+		if (!found) {
+			printf("ReadPARl: Bond parameters missing for %s-%s\n", atoms[iatm].type, atoms[jatm].type);
+			_getch(); exit(1);
+		}
+	}
+
+	// NONBONDED
+	for (iatm = 1; iatm <= natm; iatm++) {
+		rewind(par); // set pointer to beginning of file
+		strcpy(str0, "");
+		while (strcmp(str0, "NONBONDED")) { // skip lines up to "NONBOMDED"
+			fgets(line, sizeof(line), par); // get line
+			sscanf(line, "%s", str0); // first string in line
+		}
+
+		found = 0;// start parsing
+		while (fgets(line, sizeof(line), par)) { // read remaining lines in file
+			sscanf(line, "%s", str0); // first string in line
+			if (!strcmp(atoms[iatm].type, str0)) { // check match of searched type
+				// RminLJ = Rmin / 2, epsLJ = sqrt(eps)
+				sscanf(line, "%*s %*f %lf %lf",
+					&atoms[iatm].epsLJ, &atoms[iatm].RminLJ);
+				atoms[iatm].epsLJ = sqrt(fabs(atoms[iatm].epsLJ));
+				found = 1;
+				break;
+			}
+		}
+		if (!found) {
+			printf("ReadPARl: Nonbonded parameters missing for atom type %s\n",
+				atoms[iatm].type);
+			_getch(); exit(1);
+		}
+		fclose(par);
+	}
 }
 
 // Reads input
