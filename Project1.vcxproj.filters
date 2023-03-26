@@ -27,6 +27,9 @@
     <ClCompile Include="input_output.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="pairs.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ewald.h">
@@ -48,6 +51,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Memalloc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="pairs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

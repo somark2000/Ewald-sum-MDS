@@ -131,6 +131,7 @@
     <ClCompile Include="functions.cpp" />
     <ClCompile Include="input_output.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="pairs.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="basetype.h" />
@@ -140,6 +141,7 @@
     <ClInclude Include="functions.h" />
     <ClInclude Include="input_output.h" />
     <ClInclude Include="Memalloc.h" />
+    <ClInclude Include="pairs.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

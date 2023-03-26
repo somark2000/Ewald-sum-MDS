@@ -103,6 +103,6 @@ Bond::Bond(char* atomi, char* atomj, int indi, int indj, int ityp, int rigid, re
 	this->len = len;
 	this->unit = unit;
 }
-Bond::Bond() {
+Bond::~Bond() {
 
 }
