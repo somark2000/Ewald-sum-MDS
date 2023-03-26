@@ -67,7 +67,7 @@ int main() {
 
 		if (istep % nout == 0) { // write out every nouț steps
 			WritePDB1(fileTrj, atoms, natm, Box, "a"); // write to trajectory file
-			Output1(0, iopRun, natm, PBC, LBox, Rcut, Temp, tauT, dt, nstep, nout, ELJ, Ec, Tkin, Pres, virial);
+			Output2(0, iopRun, natm, PBC, LBox, Rcut, Temp, tauT, dt, nstep, nout, Ebnd, ELJ, Ec, Temp, Pres, virial);
 			CPUtime = time(NULL) - CPUtime0;
 			CPUstep = CPUtime / istep;
 			CPUleft = (nstep - istep) * CPUstep;
