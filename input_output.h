@@ -26,4 +26,5 @@ void Input1(int& iopRun, int& PBC, real& Lbox, real& Rcut, real& Temp, real& tau
 void Output0(int istep, int iopRun, int natm, real Rcut, real Temp, real dt, int nstep, int nouț, real ELJ, real Ec);
 void Output1(int istep, int iopRun, int natm, int PBC, real Lbox, real Rcut, real Temp, real tauT, real dt, int nstep, int nout, real ELI, real Ekin, real Tkin, real Pres, real virial);
 void Output2(int istep, int iopRun, int natm, int PBC, real Lbox, real Rcut, real Temp, real tauT, real dt, int nstep, int nout, real Ebnd, real ELI, real Ekin, real Tkin, real Pres, real virial);
+void Output3(int istep, int iopRun, int natm, int PBC, real Lbox, real Rcut, real Temp, real tauT, real dt, int nstep, int nout, real Ebnd, real ELJ, real Eele, real Ekin, real Tkin, real Pres, real virial);
 #endif // !input_output_h

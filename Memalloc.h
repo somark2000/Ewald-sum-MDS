@@ -19,6 +19,7 @@ template <typename T> void FreeVec(T* p, int min)
 // Allocates a T matrix, with row and column indices in the range
 template <typename T> T** Mat(int imin, int imax, int jmin, int jmax)
 {
+	T** p;
 	int i, ni, nj;
 	ni = imax - imin + 1, nj = jmax - jmin + 1; // numbers of rows and columns
 	P = (T**)malloc((size_t)(ni * sizeof(T*))); // allocate array of row pointers

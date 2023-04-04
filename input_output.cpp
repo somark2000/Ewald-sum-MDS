@@ -371,3 +371,24 @@ void Output2(int istep, int iopRun, int natm, int PBC, real Lbox, real Rcut, rea
 		fclose(out);
 	}
 }
+
+void Output3(int istep, int iopRun, int natm, int PBC, real Lbox, real Rcut, real Temp, real tauT, real dt, int nstep, int nout, real Ebnd, real ELJ, real Eele, real Ekin, real Tkin, real Pres, real virial) {
+	FILE* out;
+	real Etot;
+	if (istep == 0) {
+		out = fopen("mdsim.out", "w");
+		fprintf(out, " iopRun =   %6d\n", iopRun);
+		fprintf(out, " PBC =      %6d\n", PBC);
+		fprintf(out, " Lbox (A) = %6.21f\n", Lbox);
+		fprintf(out, " Rcut(A) =  %6.21f\n", Rcut);
+		fprintf(out, " Temp (K) = %6.21f\n", Temp);
+		fprintf(out, " tauT(pc) = %6.21f\n", tauT);
+		fprintf(out, " dt (ps) =  %6g\n", dt);
+		fprintf(out, " nstep =    %6d\n", nstep);
+		fprintf(out, " nout =     %6d\n", nout);
+
+		Etot = Ebnd + ELJ + Eele + Ekin;
+		fprintf(out, "%7d%10.4f%l2.4f%l2.4f%l2.4f%l2.4f%l2.4f%l2.4f%l2.4f%l2.4f\n",
+			istep, istep * dt, Etot, Ebnd, ELJ, Eele, Ekin, Tkin, Pres, virial);
+		fclose(out);
+}

@@ -166,6 +166,89 @@ void Forces2(Atom atoms[], int natm, Pair pairs[], int npair, Bond bnds[], int n
 	}
 }
 
+// Returns the forces acting on atoms and the corresponding energies.
+void Forces3(Atom atoms[], int natm, Pair pairs[], int npair, Bond bnds[], int nbnd, int PBC, VecR3 Box, real Rcut, real& Ebnd, real& ELJ, real& Eele, real& virial) {
+	real Box2x, Box2y, Box2z;
+	real fpr, Rcut2, Rr2, Rr6, rx, ry, rz, r2;
+	real bb, db, fact, fix, fiy, fiz, ubx, uby, ubz;
+	real epsLJ, RminLJ;
+	real alphr, alphaEw, Erfc, Erfd, qq, qr, r;
+	int iatm, ibnd, ipair, jatm;
+	const real sqpi2 = 2e0 / sqrt(pi);
+
+	// Ewald alpha - rule of thumb from D. Rapaport pp. 347
+	alphaEw = 5e0 / Box.z;
+	Rcut2 = Rcut * Rcut;
+	Box2x = Box.x / 2e0; // simulation box half-size
+	Box2y = Box.y / 2e0;
+	Box2z = Box.z / 2e0;
+	for (iatm = 1; iatm <= natm; iatm++) atoms[iatm].f = { 0e0, 0e0, 0e0 };
+
+	//Non-Bounded interaction
+	ELJ = 0e0;
+	Eele = 0e0;
+	virial = 0e0;
+	for (ipair = 1; ipair < npair; ipair++) {
+		iatm = pairs[ipair].indi;
+		jatm = pairs[ipair].indj;
+		rx = atoms[iatm].r.x - atoms[jatm].r.x; // interatomic distance
+		ry = atoms[iatm].r.y - atoms[jatm].r.y;
+		rz = atoms[iatm].r.z - atoms[jatm].r.z;
+
+		qq = atoms[iatm].chrg * atoms[jatm].chrg; // product of charges
+		if (qq) { // Coulomb interactions
+			if (!PBC) { // no PBC - point charges
+				qr = fcoul * qq / sqrt(r2);
+				Eele += qr;
+				fpr += qr / r2; // i / r
+			}
+			else if (r2 < Rcut2) { // PBC - R-space short-range contributions
+				r = sqrt(r2);
+				qr = fcoul * qq / r;
+				alphr = alphaEw * r;
+				Erfc = erfc(alphr);
+				Erfd = (Erfc + sqpi2 * alphr * exp(-alphr * alphr)) / r2;
+				Eele += qr * Erfc;
+				fpr += qr * Erfd;
+			}
+		}
+		if (fpr) {
+			atoms[iatm].f.x += fpr * rx; atoms[jatm].f.x -= fpr * rx;
+			atoms[iatm].f.y += fpr * ry; atoms[jatm].f.y -= fpr * ry;
+			atoms[iatm].f.z += fpr * rz; atoms[jatm].f.z -= fpr * rz;
+			virial += fpr * r2; // add virial term
+		}
+
+		// k-space Ewald contributions
+		if (PBC) EwaldK0(atoms, natm, Box, alphaEw, Eele);
+
+		//Bounded itnteraction
+		Ebnd = 0e0; // Bond stretching
+		for (ibnd = 1; ibnd <= nbnd; ibnd++) { // loop over bond list
+			iatm = bnds[ibnd].indi; jatm = bnds[ibnd].indj; // atoms defining the bond
+			ubx = atoms[iatm].r.x - atoms[jatm].r.x; // components of bond vector
+			uby = atoms[iatm].r.y - atoms[jatm].r.y;
+			ubz = atoms[iatm].r.z - atoms[jatm].r.z;
+			if (PBC) { // minimum image correction
+				if (ubx > Box2x) ubx -= Box.x; else if (ubx < -Box2x) ubx += Box.x;
+				if (uby > Box2y) uby -= Box.y; else if (uby < -Box2y) uby += Box.y;
+				if (ubz > Box2z) ubz -= Box.z; else if (ubz < -Box2z) ubz += Box.z;
+			}
+			bb = sqrt(ubx * ubx + uby * uby + ubz * ubz); // bond length
+			ubx /= bb; uby /= bb; ubz /= bb; // unit vector of bond
+			db = bb - bnds[ibnd].b0; // deviation from equilibrium value
+			Ebnd += bnds[ibnd].Kb * db * db; // bond stretching energy
+			fact = -2e0 * bnds[ibnd].Kb * db; // -potential derivative -dU/db
+			fix = fact * ubx; // force on atom iatm
+			fiy = fact * uby;
+			fiz = fact * ubz;
+			atoms[iatm].f.x += fix; atoms[jatm].f.x -= fix;
+			atoms[iatm].f.y += fiy; atoms[jatm].f.y -= fiy;
+			atoms[iatm].f.z += fiz; atoms[jatm].f.z -= fiz;
+		}
+	}
+}
+
 //time propagation
 void Verlet(Atom atoms[], int natm, real Rcut, real dt, real& ELJ, real& Ec) {
 	/*
@@ -300,6 +383,64 @@ void Verlet2(Atom atoms[], int natm, Pair pairs[], int npair, Bond bnds[], int n
 	}
 	// update forces
 	Forces2(atoms, natm, pairs, npair, bnds, nbnd, PBC, Box, Rcut, Ebnd, ELJ, virial);
+	// CORRECTOR STEP
+	Ekin = 0e0;
+	for (iatm = 1; iatm < natm; iatm++) {
+		atoms[iatm].a.x = facc * atoms[iatm].f.x / atoms[iatm].mass;
+		atoms[iatm].a.y = facc * atoms[iatm].f.y / atoms[iatm].mass;
+		atoms[iatm].a.z = facc * atoms[iatm].f.z / atoms[iatm].mass;
+
+		atoms[iatm].v.x += dt2 * atoms[iatm].a.x;
+		atoms[iatm].v.y += dt2 * atoms[iatm].a.y;
+		atoms[iatm].v.z += dt2 * atoms[iatm].a.z;
+
+		v2 = atoms[iatm].v.x * atoms[iatm].v.x +
+			atoms[iatm].v.y * atoms[iatm].v.y +
+			atoms[iatm].v.z * atoms[iatm].v.z;
+
+		atoms[iatm].beta = v2; // squared velocity for velocity distribution
+		Ekin += atoms[iatm].mass * v2;
+	}
+	Ekin *= fkin / 2e0;
+}
+
+void Verlet3(Atom atoms[], int natm, Pair pairs[], int npair, Bond bnds[], int nbnd, int PBC, VecR3 Box, real Rcut, real dt, real& Ebnd, real& ELJ, real& Eele, real& Ekin, real& virial) {
+	real Box2x, Box2y, Box2z, dt2, v2, dx, dy, dz;
+	int iatm;
+	dt2 = dt / 2e0;
+	Box2x = Box.x / 2e0; // simulation box ha If-size
+	Box2y = Box.y / 2e0;
+	Box2z = Box.z / 2e0;
+
+	//Predictor
+	for (iatm = 1; iatm <= natm; iatm++) {
+		atoms[iatm].v.x += dt2 * atoms[iatm].a.x;// v(t+dt/2)
+		atoms[iatm].v.y += dt2 * atoms[iatm].a.y;
+		atoms[iatm].v.z += dt2 * atoms[iatm].a.z;
+		atoms[iatm].r.x += dt * atoms[iatm].v.x;// r(t+dt)
+		atoms[iatm].r.y += dt * atoms[iatm].v.y;
+		atoms[iatm].r.z += dt * atoms[iatm].v.z;
+	}
+	if (PBC) { // wrap coordinates back into the box
+		for (iatm = 1; iatm <= natm; iatm++) { // keep residues together
+			// first atom of the current residue
+			if (iatm == 1 || atoms[iatm].ires != atoms[iatm - 1].ires) {
+				dx = dy = dz = 0e0;
+				if (atoms[iatm].r.x > Box2x) dx -= Box.x;
+				else if (atoms[iatm].r.x < -Box2x) dx += Box.x;
+				if (atoms[iatm].r.y > Box2y) dy -= Box.y;
+				else if (atoms[iatm].r.y < -Box2y) dy += Box.y;
+				if (atoms[iatm].r.z > Box2z) dz -= Box.z;
+				else if (atoms[iatm].r.z < -Box2z) dz += Box.z;
+			}
+			// wrap all atoms of the residue after the first atom
+			if (dx) atoms[iatm].r.x += dx;
+			if (dy) atoms[iatm].r.y += dy;
+			if (dz) atoms[iatm].r.z += dz;
+		}
+	}
+	// update forces
+	Forces3(atoms, natm, pairs, npair, bnds, nbnd, PBC, Box, Rcut, Ebnd, ELJ, Eele, virial);
 	// CORRECTOR STEP
 	Ekin = 0e0;
 	for (iatm = 1; iatm < natm; iatm++) {
