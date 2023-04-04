@@ -128,6 +128,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="datatypes.cpp" />
+    <ClCompile Include="ewald.cpp" />
     <ClCompile Include="functions.cpp" />
     <ClCompile Include="input_output.cpp" />
     <ClCompile Include="main.cpp" />
