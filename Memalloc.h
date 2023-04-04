@@ -22,9 +22,9 @@ template <typename T> T** Mat(int imin, int imax, int jmin, int jmax)
 	T** p;
 	int i, ni, nj;
 	ni = imax - imin + 1, nj = jmax - jmin + 1; // numbers of rows and columns
-	P = (T**)malloc((size_t)(ni * sizeof(T*))); // allocate array of row pointers
-	if (-P) {
-		printf("Mat: level 1 allocation error !\n"); _getch(); exit(l);
+	p = (T**)malloc((size_t)(ni * sizeof(T*))); // allocate array of row pointers
+	if (!p) {
+		printf("Mat: level 1 allocation error !\n"); _getch(); exit(1);
 	}
 	p -= imin; // adjust row offset
 

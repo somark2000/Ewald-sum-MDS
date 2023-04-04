@@ -194,6 +194,8 @@ void Forces3(Atom atoms[], int natm, Pair pairs[], int npair, Bond bnds[], int n
 		rx = atoms[iatm].r.x - atoms[jatm].r.x; // interatomic distance
 		ry = atoms[iatm].r.y - atoms[jatm].r.y;
 		rz = atoms[iatm].r.z - atoms[jatm].r.z;
+		fpr = 0e0; // initialize f/r
+		r2 = rx * rx + ry * ry + rz * rz; // squared interatomic distance
 
 		qq = atoms[iatm].chrg * atoms[jatm].chrg; // product of charges
 		if (qq) { // Coulomb interactions

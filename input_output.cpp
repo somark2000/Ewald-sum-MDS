@@ -391,4 +391,5 @@ void Output3(int istep, int iopRun, int natm, int PBC, real Lbox, real Rcut, rea
 		fprintf(out, "%7d%10.4f%l2.4f%l2.4f%l2.4f%l2.4f%l2.4f%l2.4f%l2.4f%l2.4f\n",
 			istep, istep * dt, Etot, Ebnd, ELJ, Eele, Ekin, Tkin, Pres, virial);
 		fclose(out);
+	}
 }
