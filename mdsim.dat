@@ -1,0 +1,9 @@
+iopRun 0
+PBC 1
+Lbox (A) 20.507
+Rcut (A) 10.0
+Temp (K) 300.0
+tauT (ps) 0.5
+dt (ps) 2e-3
+nstep 100000
+nout 10

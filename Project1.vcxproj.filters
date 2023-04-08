@@ -60,4 +60,10 @@
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="mdsim.dat" />
+    <None Include="mdsim.par" />
+    <None Include="mdsim.pdb" />
+    <None Include="mdsim.psf" />
+  </ItemGroup>
 </Project>
