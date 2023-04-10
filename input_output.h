@@ -4,7 +4,7 @@
 
 #include <iostream>
 #include <fstream>
-#include <conio.h>
+//#include <conio.h>
 #include <string.h>
 #include "basetype.h"
 #include "datatypes.h"

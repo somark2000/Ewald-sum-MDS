@@ -3,7 +3,7 @@
 #include "basetype.h"
 
 //basic mathematic constants
-const real pi = 3.141592653589793;
+const real pi = 3.141592653589793*1e0;
 const real rad = pi / 180;
 const real deg = 180 / pi;
 

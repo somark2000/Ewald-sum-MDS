@@ -28,18 +28,18 @@ int main() {
 	Input1(iopRun, PBC, LBox, Rcut, Temp, tauT, dt, nstep, nout);
 	Box = { LBox, LBox, LBox };
 	Vbox = Box.x * Box.y * Box.z;
-	natm = GetDimPSF0(filePSF);
+	natm = GetDimPSF1(filePSF,nbnd);
 	atoms = Vec<Atom>(1, natm);
 	bnds = Vec<Bond>(1, nbnd);
-
 	// read data from PSF, PDB, and PAR files
 	ReadPSF1(filePSF, atoms, natm, bnds, nbnd);
-	ReadPDB0(filePDB, atoms, natm);
-	ReadPAR1(filePAR, atoms, natm, bnds, nbnd);
-	npair = GetPairNum0(atoms, natm, bnds, nbnd);
+	std::cout << "started2\n";
+	ReadPDB0(filePDB, atoms, natm);	std::cout << "started3\n";
+	ReadPAR1(filePAR, atoms, natm, bnds, nbnd);	std::cout << "started4\n";
+	npair = GetPairNum0(atoms, natm, bnds, nbnd);	std::cout << "started5\n";
 	pairs = Vec<Pair>(1, npair);
 	PairList0(atoms, natm, bnds, nbnd, pairs, npair);
-	
+	std::cout << "started6\n";
 	// initialize system
 	ZeroVelAcc(atoms, natm); 
 	Ec = 1.5e0 * natm * kB * Temp;
@@ -55,6 +55,7 @@ int main() {
 	Output3(0, iopRun, natm, PBC, LBox, Rcut, Temp, tauT, dt, nstep, nout, Ebnd, ELJ, Eele, Ec, Temp, Pres, virial);
 	CPUtime0 = time(NULL);
 	t = 0e0;
+	std::cout << "started7\n";
 	WritePDB1(fileTrj, atoms, natm,Box, "w");
 	for (istep = 1; istep <= nstep; istep++) { // temporal loop
 		t += dt;
@@ -76,6 +77,7 @@ int main() {
 			CPUtime = time(NULL) - CPUtime0;
 			CPUstep = CPUtime / istep;
 			CPUleft = (nstep - istep) * CPUstep;
+			std::cout << "started\n";
 			printf("CPU time used : % .2f left : % .2f sec \r", CPUtime, CPUleft);
 		}
 	}

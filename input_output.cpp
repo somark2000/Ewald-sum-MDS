@@ -17,7 +17,7 @@ int GetDimPDB(const char* file) {
 	int n=0;
 	pdb = fopen(file, "r");
 	if (!pdb) {
-		std::cout << "GetDimPDB: pdb file missing!\n"; _getch(); exit(1);
+		std::cout << "GetDimPDB: pdb file missing!\n";  exit(1);
 	}
 	strcpy_s(string, "");
 	while (!strstr(string, "END")) { // while not finding "END"
@@ -35,7 +35,7 @@ int GetDimPSFl(const char* file, int ftnbnd) {
 	int natm;
 	char line[100];
 	psf = fopen(file, "r");
-	if (!psf) { printf("GetDimPSFl: input file missing!\n"); _getch(); exit(1); }
+	if (!psf) { printf("GetDimPSFl: input file missing!\n");  exit(1); }
 	strcpy(line, ""); // search for header "INATOM"
 		while (!strstr(line, "INATOM")) fgets(line, sizeof(line), psf);
 			sscanf(line, "%d", &natm);
@@ -53,7 +53,7 @@ void ReadPDB0(const char* file, Atom atoms[], int n) {
 	char line[100], string[10];
 	pdb = fopen(file, "r");
 	if (!pdb) {
-		std::cout<<("ReadPDBO: pdb file missing!\n"); _getch(); exit(1); }
+		std::cout<<("ReadPDBO: pdb file missing!\n");  exit(1); }
 		strcpy_s(string, "");
 		while (!strstr(string, "END")) { // while not finding "END"
 			fgets(line, sizeof(line), pdb); // get line
@@ -115,12 +115,33 @@ int GetDimPSF0(const char* file)
 	int n;
 	char line[100];
 	psf = fopen(file, "r");
-	if (!psf) { printf("GetDimPSF: input file missing!\n"); _getch(); exit(1); }
+	if (!psf) { printf("GetDimPSF: input file missing!\n");  exit(1); }
 	strcpy_s(line, ""); // search for header "ÎNATOM"
 	while (!strstr(line, "!NATOM")) fgets(line, sizeof(line), psf);
 		sscanf_s(line, "%d", &n);
 	fclose(psf);
 	return n;
+}
+
+// Retrieves the main dimensions from a psf file
+int GetDimPSF1(const char* file, int& nbnd)
+{
+	FILE* psf;
+	int natm;
+	char line[100];
+
+	psf = fopen(file, "r");
+	if (!psf) { printf("GetDimPSF1: input file missing!\n"); exit(1); }
+
+	strcpy(line, "");                               // search for header "!NATOM"
+	while (!strstr(line, "!NATOM")) fgets(line, sizeof(line), psf);
+	sscanf(line, "%d", &natm);
+	// search for header "!NBOND"
+	while (!strstr(line, "!NBOND")) fgets(line, sizeof(line), psf);
+	sscanf(line, "%d", &nbnd);
+
+	fclose(psf);
+	return natm;
 }
 
 
@@ -131,7 +152,7 @@ void ReadPSF0(const char* file, Atom atoms[], int n){
 	char line[100];
 	psf = fopen(file, "r");
 	if (!psf) {
-		printf("ReadPSF: input file missing!\n"); _getch(); exit(1); }
+		printf("ReadPSF: input file missing!\n");  exit(1); }
 		strcpy_s(line, ""); // ATOMS - scan for header "ÎNATOM"
 		while (!strstr(line, "!NATOM")) fgets(line, sizeof(line), psf); // get lines
 			sscanf_s(line, "%d", &n1);
@@ -148,11 +169,11 @@ void ReadPSF1(const char* file, Atom atoms[], int natm, Bond bnds[], int nbnd) {
 	FILE* psf;
 	int iatm, ibnd, _natm, _nbnd;
 	char line[100];
-	psf = fopen(file, "r");
-	if (!psf) { printf("ReadPSFl: input file missing!\n"); _getch(); exit(1); }
+	psf = fopen(file, "r");	std::cout << "started\n";
+	if (!psf) { printf("ReadPSFl: input file missing!\n");  exit(1); }
 	strcpy(line, ""); // ATOMS - scan for header "INATOM"
-	while (!strstr(line, "INATOM")) fgets(line, sizeof(line), psf); // get lines
-	sscanf(line, "%d", &_natm);
+	while (!strstr(line, "!NATOM")) fgets(line, sizeof(line), psf); // get lines
+	sscanf(line, "%d", &_natm);	std::cout << "started\n";
 	if (_natm != natm) {
 		printf("ReadPSFl: inconsistent natm I %i %i\n", natm, _natm); exit(2);
 	}
@@ -164,7 +185,7 @@ void ReadPSF1(const char* file, Atom atoms[], int natm, Bond bnds[], int nbnd) {
 	}
 
 	//BONDS
-	while (!strstr(line, "INBOND")) fgets(line, sizeof(line), psf);
+	while (!strstr(line, "!NBOND")) fgets(line, sizeof(line), psf);
 	sscanf(line, "%d", &_nbnd);
 	if (_nbnd != nbnd) {
 		printf("ReadPSFl: inconsistent nbnd I %i %i\n", nbnd, _nbnd); exit(3);
@@ -181,7 +202,7 @@ void ReadPAR0(const char* file, Atom atoms[], int natm) {
 	char line[100], str0[20];
 	par = fopen(file, "r");
 	if (!par) {
-		printf("ReadPARO: input file missing! \n"); _getch(); exit(1);
+		printf("ReadPARO: input file missing! \n");  exit(1);
 	}
 	// NONBONDED
 	for (int i = 1; i <= natm; i++) {
@@ -203,7 +224,7 @@ void ReadPAR0(const char* file, Atom atoms[], int natm) {
 		}
 		if (!found) {
 			printf("ReadPAR0: Nonbonded parameters missing for atom type %s\n", atoms[i].type);
-			_getch(); exit(1);
+			 exit(1);
 		}
 	}
 	fclose(par);
@@ -214,7 +235,7 @@ void ReadPAR1(const char* file, Atom atoms[], int natm, Bond bnds[], int nbnd) {
 	int iatm, ibnd, jatm, found;
 	char line[100], str0[20], strl[20];
 	par = fopen(file, "r");
-	if (!par) printf("ReadPARl: input file missing!\n"); _getch(); exit(1);
+	if (!par) printf("ReadPARl: input file missing!\n");  exit(1);
 
 	// BONDS
 	for (ibnd = 1; ibnd <= nbnd; ibnd++) {
@@ -240,7 +261,7 @@ void ReadPAR1(const char* file, Atom atoms[], int natm, Bond bnds[], int nbnd) {
 		}
 		if (!found) {
 			printf("ReadPARl: Bond parameters missing for %s-%s\n", atoms[iatm].type, atoms[jatm].type);
-			_getch(); exit(1);
+			 exit(1);
 		}
 	}
 
@@ -268,7 +289,7 @@ void ReadPAR1(const char* file, Atom atoms[], int natm, Bond bnds[], int nbnd) {
 		if (!found) {
 			printf("ReadPARl: Nonbonded parameters missing for atom type %s\n",
 				atoms[iatm].type);
-			_getch(); exit(1);
+			 exit(1);
 		}
 		fclose(par);
 	}
@@ -279,7 +300,7 @@ void Input(int &iopRun, double &Rcut, double &Temp, double &dt, int &nstep, int 
 	FILE* in;
 	in = fopen("mdsim.dat", "r");
 	if (in == NULL) {
-		printf("MDsim.dat missing !\n"); _getch(); exit(1); }
+		printf("MDsim.dat missing !\n");  exit(1); }
 	fscanf_s(in, "%*15c%d", &iopRun);
 	fscanf_s(in, "%*15c%lf", &Rcut);
 	fscanf_s(in, "%*15c%lf", &Temp);
@@ -293,7 +314,7 @@ void Input(int &iopRun, double &Rcut, double &Temp, double &dt, int &nstep, int 
 void Input1(int &iopRun, int& PBC, real& Lbox, real& Rcut, real& Temp, real &tauT, real& dt, int& nstep, int &nout) {
 	FILE* in;
 	in = fopen("mdsim.dat", "r");
-	if (in == NULL) { printf("MDsim.dat missing !\n"); getch(); exit(1); }
+	if (in == NULL) { printf("MDsim.dat missing !\n");  exit(1); }
 	fscanf(in, "%*15c%d", &iopRun); // run type
 	fscanf(in, "%*15c%d", & PBC); // != 0 - periodic boundary conditions
 	fscanf(in, "%*15c%lf", &Lbox); // box size (A)

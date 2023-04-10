@@ -1,7 +1,7 @@
 #pragma once
 
 #include <iostream>
-#include <conio.h>
+//#include <conio.h>
 
 template <typename T> T* Vec(int min, int max)
 {
@@ -24,14 +24,14 @@ template <typename T> T** Mat(int imin, int imax, int jmin, int jmax)
 	ni = imax - imin + 1, nj = jmax - jmin + 1; // numbers of rows and columns
 	p = (T**)malloc((size_t)(ni * sizeof(T*))); // allocate array of row pointers
 	if (!p) {
-		printf("Mat: level 1 allocation error !\n"); _getch(); exit(1);
+		printf("Mat: level 1 allocation error !\n");  exit(1);
 	}
 	p -= imin; // adjust row offset
 
 	// assign block start to 1st row pointer
 	p[imin] = (T*)malloc((size_t)(ni * nj * sizeof(T)));
 	if (!p[imin]) {
-		printf("Mat: level 2 allocation error !\n"); _getch(); exit(2);
+		printf("Mat: level 2 allocation error !\n");  exit(2);
 	}
 	p[imin] -= jmin; // adjust 1st row pointer for column offset
 
