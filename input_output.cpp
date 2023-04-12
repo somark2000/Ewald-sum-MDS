@@ -12,69 +12,70 @@ void strstrip(char src[], char res[], int i1, int i2){
 
 // Retrieves the number of atoms from a pdb file
 int GetDimPDB(const char* file) {
-	FILE* pdb;
-	char line[100], string[10];
-	int n=0;
-	pdb = fopen(file, "r");
-	if (!pdb) {
-		std::cout << "GetDimPDB: pdb file missing!\n";  exit(1);
+	std::ifstream in;
+	in.open(file);
+	int n = 0;
+	if(!in.is_open()) std::cout << "GetDimPDB: pdb file missing!\n";  exit(1);
+	std::string string = "",line="";
+	while (!string.find("END")) {
+		std::getline(in, line);
+		sscanf_s(line.c_str(), "%s ", string); // first string in line
+		if (!strcmp(string.c_str(), "ATOM") || !strcmp(string.c_str(), "HETATM")) n += 1;
 	}
-	strcpy_s(string, "");
-	while (!strstr(string, "END")) { // while not finding "END"
-		fgets(line, sizeof(line), pdb); // get line
-		sscanf_s(line, "%s ", string); // first string in line
-		if (!strcmp(string, "ATOM") || !strcmp(string, "HETATM")) n += 1;
-	}
-	fclose(pdb);
+	in.close();
 	return n;
 }
 
-// Retrieves the main dimensions from a psf file
-int GetDimPSFl(const char* file, int ftnbnd) {
+int GetDimPSF1(const char* file, int& nbnd)
+{
 	FILE* psf;
 	int natm;
 	char line[100];
+
 	psf = fopen(file, "r");
-	if (!psf) { printf("GetDimPSFl: input file missing!\n");  exit(1); }
-	strcpy(line, ""); // search for header "INATOM"
-		while (!strstr(line, "INATOM")) fgets(line, sizeof(line), psf);
-			sscanf(line, "%d", &natm);
-	// search for header "IN3OND"
-	while (!strstr(line, "INBOND")) fgets(line, sizeof(line), psf);
-	sscanf(line, "%d", ftnbnd);
+	if (!psf) { printf("GetDimPSF1: input file missing!\n"); _getch(); exit(1); }
+
+	strcpy(line, "");                               // search for header "!NATOM"
+	while (!strstr(line, "!NATOM")) fgets(line, sizeof(line), psf);
+	sscanf(line, "%d", &natm);
+	// search for header "!NBOND"
+	while (!strstr(line, "!NBOND")) fgets(line, sizeof(line), psf);
+	sscanf(line, "%d", &nbnd);
+
 	fclose(psf);
 	return natm;
 }
 
 // Reads data from a pdb file in a list of atoms.
-void ReadPDB0(const char* file, Atom atoms[], int n) {
+void ReadPDB0(const char* file, Atom atoms[], int &n) {
 	FILE* pdb;
-	int i=0;
+	int i = 0;
 	char line[100], string[10];
 	pdb = fopen(file, "r");
 	if (!pdb) {
-		std::cout<<("ReadPDBO: pdb file missing!\n");  exit(1); }
-		strcpy_s(string, "");
-		while (!strstr(string, "END")) { // while not finding "END"
-			fgets(line, sizeof(line), pdb); // get line
-			sscanf_s(line, "%s", string); // first string in line
-			if (!strcmp(string, "ATOM") || !strcmp(string, "HETATM")) {
-				i += 1;
-				if (i > n) {
-					printf("ReadPDBO: inconsistent natm ! %i\n", n); exit(1);
-				}
-				strstrip(line, atoms[i].name, 12, 15);
-				strstrip(line, atoms[i].resi, 17, 20);
-				strstrip(line, atoms[i].segm, 21, 21);
-				strstrip(line, string, 22, 25); atoms[i].ires = strtol(string, NULL, 10);
-				strstrip(line, string, 30, 37); atoms[i].r.x = strtof(string, NULL);
-				strstrip(line, string, 38, 45); atoms[i].r.y = strtof(string, NULL);
-				strstrip(line, string, 46, 53); atoms[i].r.z = strtof(string, NULL);
-				strstrip(line, string, 54, 59); atoms[i].occp = strtof(string, NULL);
-				strstrip(line, string, 60, 65); atoms[i].beta = strtod(string, NULL);
-				strstrip(line, atoms[i].symb, 76, 77);
+		std::cout << ("ReadPDBO: pdb file missing!\n");  exit(1);
+	}
+	strcpy_s(string, "");
+	while (!strstr(string, "END")) { // while not finding "END"
+		fgets(line, sizeof(line), pdb); // get line
+		sscanf(line, "%[A-Z] ", string); // first string in line
+		if (!strcmp(string, "ATOM") || !strcmp(string, "HETATM")) {
+			i += 1;
+			if (i > n) {
+				printf("ReadPDBO: inconsistent natm ! %i\n", n); exit(1);
 			}
+			strstrip(line, atoms[i].name, 12, 15);
+			strstrip(line, atoms[i].resi, 17, 20);
+			strstrip(line, atoms[i].segm, 21, 21);
+			strstrip(line, string, 22, 25); atoms[i].ires = strtol(string, NULL, 10);
+			strstrip(line, string, 30, 37); atoms[i].r.x = strtof(string, NULL);
+			strstrip(line, string, 38, 45); atoms[i].r.y = strtof(string, NULL);
+			strstrip(line, string, 46, 53); atoms[i].r.z = strtof(string, NULL);
+			strstrip(line, string, 54, 59); atoms[i].occp = strtof(string, NULL);
+			strstrip(line, string, 60, 65); atoms[i].beta = strtod(string, NULL);
+			strstrip(line, atoms[i].symb, 76, 77);
 		}
+	}
 	fclose(pdb);
 }
 
@@ -95,16 +96,22 @@ void WritePDB1(const char* file, Atom atoms[], int natm, VecR3 Box, const char* 
 {
 	FILE* pdb;
 	int iatm;
-	const char* strfrm = "ATOM % 5d % -4s % -4s % ls % 4d % 8.3f % 8.3f % 8.3f % 6.2f % 6.2f % -2s\n";
+	const char* strfrm =
+		"ATOM  %5d %-4s %-4s%1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %-2s\n";
+
 	pdb = fopen(file, mode);
+
 	if (Box.x * Box.y * Box.z != 0e0)
-		fprintf(pdb, "CRYST1%9.3f%9.3f%9.3f 90.00 90.00 90.00\n", Box.x, Box.y, Box.z);
+		fprintf(pdb, "CRYST1%9.3f%9.3f%9.3f  90.00  90.00  90.00\n",
+			Box.x, Box.y, Box.z);
+
 	for (iatm = 1; iatm <= natm; iatm++)
 		fprintf(pdb, strfrm, iatm, atoms[iatm].name, atoms[iatm].resi,
 			atoms[iatm].segm, atoms[iatm].ires,
 			atoms[iatm].r.x, atoms[iatm].r.y, atoms[iatm].r.z,
 			atoms[iatm].occp, atoms[iatm].beta, atoms[iatm].symb);
 	fprintf(pdb, "END\n");
+
 	fclose(pdb);
 }
 
@@ -123,30 +130,8 @@ int GetDimPSF0(const char* file)
 	return n;
 }
 
-// Retrieves the main dimensions from a psf file
-int GetDimPSF1(const char* file, int& nbnd)
-{
-	FILE* psf;
-	int natm;
-	char line[100];
-
-	psf = fopen(file, "r");
-	if (!psf) { printf("GetDimPSF1: input file missing!\n"); exit(1); }
-
-	strcpy(line, "");                               // search for header "!NATOM"
-	while (!strstr(line, "!NATOM")) fgets(line, sizeof(line), psf);
-	sscanf(line, "%d", &natm);
-	// search for header "!NBOND"
-	while (!strstr(line, "!NBOND")) fgets(line, sizeof(line), psf);
-	sscanf(line, "%d", &nbnd);
-
-	fclose(psf);
-	return natm;
-}
-
-
 // Reads in data from a psf file
-void ReadPSF0(const char* file, Atom atoms[], int n){
+void ReadPSF0(const char* file, Atom atoms[], int &n){
 	FILE* psf;
 	int n1;
 	char line[100];
@@ -165,13 +150,13 @@ void ReadPSF0(const char* file, Atom atoms[], int n){
 		fclose(psf);
 	}
 
-void ReadPSF1(const char* file, Atom atoms[], int natm, Bond bnds[], int nbnd) {
+void ReadPSF1(const char* file, Atom atoms[], int &natm, Bond bnds[], int &nbnd) {
 	FILE* psf;
 	int iatm, ibnd, _natm, _nbnd;
 	char line[100];
 	psf = fopen(file, "r");	std::cout << "started\n";
 	if (!psf) { printf("ReadPSFl: input file missing!\n");  exit(1); }
-	strcpy(line, ""); // ATOMS - scan for header "INATOM"
+	strcpy(line, ""); // ATOMS - scan for header "!NATOM"
 	while (!strstr(line, "!NATOM")) fgets(line, sizeof(line), psf); // get lines
 	sscanf(line, "%d", &_natm);	std::cout << "started\n";
 	if (_natm != natm) {
@@ -196,7 +181,7 @@ void ReadPSF1(const char* file, Atom atoms[], int natm, Bond bnds[], int nbnd) {
 }
 
 // Reads non-bonded force field parameters from a CHARMM-type file
-void ReadPAR0(const char* file, Atom atoms[], int natm) {
+void ReadPAR0(const char* file, Atom atoms[], int &natm) {
 	FILE* par;
 	int found;
 	char line[100], str0[20];
@@ -230,54 +215,59 @@ void ReadPAR0(const char* file, Atom atoms[], int natm) {
 	fclose(par);
 }
 
-void ReadPAR1(const char* file, Atom atoms[], int natm, Bond bnds[], int nbnd) {
+void ReadPAR1(const char* file, Atom atoms[], int &natm, Bond bnds[], int &nbnd) {
 	FILE* par;
 	int iatm, ibnd, jatm, found;
-	char line[100], str0[20], strl[20];
-	par = fopen(file, "r");
-	if (!par) printf("ReadPARl: input file missing!\n");  exit(1);
+	char line[100], str0[20], str1[20];
 
-	// BONDS
-	for (ibnd = 1; ibnd <= nbnd; ibnd++) {
+	par = fopen(file, "r");
+	if (!par) { printf("ReadPAR1: input file missing!\n"); _getch(); exit(1); }
+
+	for (ibnd = 1; ibnd <= nbnd; ibnd++) {                               // BONDS
 		iatm = bnds[ibnd].indi; jatm = bnds[ibnd].indj;
-		rewind(par); // set pointer to beginning of file
+
+		rewind(par);                           // set pointer to beginning of file
 		strcpy(str0, "");
-		while (strcmp(str0, "BONDS")) { // skip lines up to "BONDS"
-			fgets(line, sizeof(line), par); // get line
-			sscanf(line, "%s", str0); // first string in line
+		while (strcmp(str0, "BONDS")) {                // skip lines up to "BONDS"
+			fgets(line, sizeof(line), par);                             // get line
+			sscanf(line, "%s", str0);                       // first string in line
 		}
 
-		found = 0; // start parsing
-		while (fgets(line, sizeof(line), par)) { // read remaining lines in file
-			sscanf(line, "%s", str0); // first string in line
+		found = 0;                                                // start parsing
+		while (fgets(line, sizeof(line), par)) {   // read remaining lines in file
+			sscanf(line, "%s", str0);                       // first string in line
 			// break if new section starts
-			if (!strcmp(str0, "ATOMS") || !strcmp(str0, "BONDS") || !strcmp(str0, "ANGLES") || !strcmp(str0, "DIHEDRALS") || !strcmp(str0, "IMPROPERS") || !strcmp(str0, "NONBONDED")) break;
-			sscanf(line, "%s %s", str0, strl); // check type match both ways
-			if ((!strcmp(atoms[iatm].type, str0) && !strcmp(atoms[jatm].type, strl)) || (!strcmp(atoms[iatm].type, strl) && !strcmp(atoms[jatm].type, str0))) {
+			if (!strcmp(str0, "ATOMS") || !strcmp(str0, "BONDS") ||
+				!strcmp(str0, "ANGLES") || !strcmp(str0, "DIHEDRALS") ||
+				!strcmp(str0, "IMPROPERS") || !strcmp(str0, "NONBONDED")) break;
+
+			sscanf(line, "%s %s", str0, str1);        // check type match both ways
+			if ((!strcmp(atoms[iatm].type, str0) &&
+				!strcmp(atoms[jatm].type, str1)) ||
+				(!strcmp(atoms[iatm].type, str1) &&
+					!strcmp(atoms[jatm].type, str0))) {
 				sscanf(line, "%*s %*s %lf %lf", &bnds[ibnd].Kb, &bnds[ibnd].b0);
 				found = 1;
 				break;
 			}
 		}
 		if (!found) {
-			printf("ReadPARl: Bond parameters missing for %s-%s\n", atoms[iatm].type, atoms[jatm].type);
-			 exit(1);
+			printf("ReadPAR1: Bond parameters missing for %s-%s\n",	atoms[iatm].type, atoms[jatm].type); exit(1);
 		}
 	}
 
-	// NONBONDED
-	for (iatm = 1; iatm <= natm; iatm++) {
-		rewind(par); // set pointer to beginning of file
+	for (iatm = 1; iatm <= natm; iatm++) {                           // NONBONDED
+		rewind(par);                           // set pointer to beginning of file
 		strcpy(str0, "");
-		while (strcmp(str0, "NONBONDED")) { // skip lines up to "NONBOMDED"
-			fgets(line, sizeof(line), par); // get line
-			sscanf(line, "%s", str0); // first string in line
+		while (strcmp(str0, "NONBONDED")) {        // skip lines up to "NONBONDED"
+			fgets(line, sizeof(line), par);                             // get line
+			sscanf(line, "%s", str0);                       // first string in line
 		}
-
-		found = 0;// start parsing
-		while (fgets(line, sizeof(line), par)) { // read remaining lines in file
-			sscanf(line, "%s", str0); // first string in line
-			if (!strcmp(atoms[iatm].type, str0)) { // check match of searched type
+		// start parsing
+		found = 0;
+		while (fgets(line, sizeof(line), par)) {   // read remaining lines in file
+			sscanf(line, "%s", str0);                       // first string in line
+			if (!strcmp(atoms[iatm].type, str0)) {  // check match of searched type
 				// RminLJ = Rmin / 2, epsLJ = sqrt(eps)
 				sscanf(line, "%*s %*f %lf %lf",
 					&atoms[iatm].epsLJ, &atoms[iatm].RminLJ);
@@ -287,18 +277,16 @@ void ReadPAR1(const char* file, Atom atoms[], int natm, Bond bnds[], int nbnd) {
 			}
 		}
 		if (!found) {
-			printf("ReadPARl: Nonbonded parameters missing for atom type %s\n",
-				atoms[iatm].type);
-			 exit(1);
+			printf("ReadPAR1: Nonbonded parameters missing for atom type %s\n",	atoms[iatm].type); exit(1);
 		}
-		fclose(par);
 	}
+	fclose(par);
 }
 
 // Reads input
 void Input(int &iopRun, double &Rcut, double &Temp, double &dt, int &nstep, int &nout) {
 	FILE* in;
-	in = fopen("mdsim.dat", "r");
+	in = fopen("D:\\Manuale\\Sem 7\\Info\\Licenta\\programe\\Project1\\mdsim.dat", "r");
 	if (in == NULL) {
 		printf("MDsim.dat missing !\n");  exit(1); }
 	fscanf_s(in, "%*15c%d", &iopRun);
@@ -311,19 +299,21 @@ void Input(int &iopRun, double &Rcut, double &Temp, double &dt, int &nstep, int 
 }
 
 
-void Input1(int &iopRun, int& PBC, real& Lbox, real& Rcut, real& Temp, real &tauT, real& dt, int& nstep, int &nout) {
+void Input1(int &iopRun, int &PBC, real &Lbox, real &Rcut, real &Temp, real &tauT, real &dt, int &nstep, int &nout)
+{
 	FILE* in;
-	in = fopen("mdsim.dat", "r");
-	if (in == NULL) { printf("MDsim.dat missing !\n");  exit(1); }
-	fscanf(in, "%*15c%d", &iopRun); // run type
-	fscanf(in, "%*15c%d", & PBC); // != 0 - periodic boundary conditions
-	fscanf(in, "%*15c%lf", &Lbox); // box size (A)
-	fscanf(in, "%*15c%lf", &Rcut); // cutoff (A)
-	fscanf(in, "%*15c%lf", &Temp); // kinetic temperature (K)
-	fscanf(in, "%*15c%lf", &tauT); // thermostat coupling constant (ps)
-	fscanf(in, "%*15c%lf", &dt); // integration time step (ps)
-	fscanf(in, "%*15c%d", &nstep); // no. of time steps
-	fscanf(in, "%*15c%d", &nout); // no. of time steps between output
+	in = fopen("D:/Manuale/Sem 7/Info/Licenta/programe/Project1/mdsim.dat", "r");
+	if (in == NULL) { printf("MDsim.dat missing !\n"); _getch(); exit(1); }
+	int x=9;
+	fscanf(in, "%d", &iopRun);                                  // run type
+	fscanf(in, "%d", &PBC);          // != 0 - periodic boundary conditions
+	fscanf(in, "%lf", &Lbox);                                // box size (A)
+	fscanf(in, "%lf", &Rcut);                                  // cutoff (A)
+	fscanf(in, "%lf", &Temp);                     // kinetic temperature (K)
+	fscanf(in, "%lf", &tauT);           // thermostat coupling constant (ps)
+	fscanf(in, "%lf", &dt);                    // integration time step (ps)
+	fscanf(in, "%d", &nstep);                          // no. of time steps
+	fscanf(in, "%d", &nout);            // no. of time steps between output
 	fclose(in);
 }
 	
@@ -396,21 +386,31 @@ void Output2(int istep, int iopRun, int natm, int PBC, real Lbox, real Rcut, rea
 void Output3(int istep, int iopRun, int natm, int PBC, real Lbox, real Rcut, real Temp, real tauT, real dt, int nstep, int nout, real Ebnd, real ELJ, real Eele, real Ekin, real Tkin, real Pres, real virial) {
 	FILE* out;
 	real Etot;
+
 	if (istep == 0) {
 		out = fopen("mdsim.out", "w");
-		fprintf(out, " iopRun =   %6d\n", iopRun);
-		fprintf(out, " PBC =      %6d\n", PBC);
-		fprintf(out, " Lbox (A) = %6.21f\n", Lbox);
-		fprintf(out, " Rcut(A) =  %6.21f\n", Rcut);
-		fprintf(out, " Temp (K) = %6.21f\n", Temp);
-		fprintf(out, " tauT(pc) = %6.21f\n", tauT);
-		fprintf(out, " dt (ps) =  %6g\n", dt);
-		fprintf(out, " nstep =    %6d\n", nstep);
-		fprintf(out, " nout =     %6d\n", nout);
-
-		Etot = Ebnd + ELJ + Eele + Ekin;
-		fprintf(out, "%7d%10.4f%l2.4f%l2.4f%l2.4f%l2.4f%l2.4f%l2.4f%l2.4f%l2.4f\n",
-			istep, istep * dt, Etot, Ebnd, ELJ, Eele, Ekin, Tkin, Pres, virial);
-		fclose(out);
+		fprintf(out, " iopRun    = %6d\n", iopRun);
+		fprintf(out, " PBC       = %6d\n", PBC);
+		fprintf(out, " Lbox (A)  = %6.2lf\n", Lbox);
+		fprintf(out, " Rcut (A)  = %6.2lf\n", Rcut);
+		fprintf(out, " Temp (K)  = %6.2lf\n", Temp);
+		fprintf(out, " tauT (ps) = %6.2lf\n", tauT);
+		fprintf(out, " dt (ps)   = %6g\n", dt);
+		fprintf(out, " nstep     = %6d\n", nstep);
+		fprintf(out, " nout      = %6d\n", nout);
+		fprintf(out, "\n"
+			"  istep     time       Etot        Ebnd        ELJ         Eele  "
+			"      Ekin        Tkin        Pres       virial \n"
+			"-----------------------------------------------------------------"
+			"------------------------------------------------\n");
 	}
+	else {
+		out = fopen("mdsim.out", "a");
+	}
+
+	Etot = Ebnd + ELJ + Eele + Ekin;
+	fprintf(out, "%7d%10.4f%12.4f%12.4f%12.4f%12.4f%12.4f%12.4f%12.4f%12.4f\n",
+		istep, istep * dt, Etot, Ebnd, ELJ, Eele, Ekin, Tkin, Pres, virial);
+
+	fclose(out);
 }

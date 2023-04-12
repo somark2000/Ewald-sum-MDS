@@ -144,12 +144,6 @@
     <ClInclude Include="Memalloc.h" />
     <ClInclude Include="pairs.h" />
   </ItemGroup>
-  <ItemGroup>
-    <None Include="mdsim.dat" />
-    <None Include="mdsim.par" />
-    <None Include="mdsim.pdb" />
-    <None Include="mdsim.psf" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

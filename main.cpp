@@ -20,10 +20,10 @@ int main() {
 	int iopRun = 0, istep = 0, natm = 0, nstep = 0, nout=0, PBC=0, nbnd=0, npair=0;
 	real CPUtime = 0e0, CPUstep = 0e0, CPUleft = 0e0;
 	time_t CPUtime0;
-	const char* filePSF = "mdsim.psf";
-	const char* filePDB = "mdsim.pdb";
-	const char* filePAR = "mdsim.par";
-	const char* fileTrj = "mdsim_trj.pdb";
+	const char* filePSF = "D:/Manuale/Sem 7/Info/Licenta/programe/Project1/mdsim.psf";
+	const char* filePDB = "D:/Manuale/Sem 7/Info/Licenta/programe/Project1/mdsim.pdb";
+	const char* filePAR = "D:/Manuale/Sem 7/Info/Licenta/programe/Project1/mdsim.par";
+	const char* fileTrj = "D:/Manuale/Sem 7/Info/Licenta/programe/Project1/mdsim_trj.pdb";
 	//Input(iopRun, Rcut, Temp, dt, nstep, nout);
 	Input1(iopRun, PBC, LBox, Rcut, Temp, tauT, dt, nstep, nout);
 	Box = { LBox, LBox, LBox };
@@ -33,13 +33,11 @@ int main() {
 	bnds = Vec<Bond>(1, nbnd);
 	// read data from PSF, PDB, and PAR files
 	ReadPSF1(filePSF, atoms, natm, bnds, nbnd);
-	std::cout << "started2\n";
-	ReadPDB0(filePDB, atoms, natm);	std::cout << "started3\n";
-	ReadPAR1(filePAR, atoms, natm, bnds, nbnd);	std::cout << "started4\n";
-	npair = GetPairNum0(atoms, natm, bnds, nbnd);	std::cout << "started5\n";
+	ReadPDB0(filePDB, atoms, natm);
+	ReadPAR1(filePAR, atoms, natm, bnds, nbnd);
+	npair = GetPairNum0(atoms, natm, bnds, nbnd);
 	pairs = Vec<Pair>(1, npair);
 	PairList0(atoms, natm, bnds, nbnd, pairs, npair);
-	std::cout << "started6\n";
 	// initialize system
 	ZeroVelAcc(atoms, natm); 
 	Ec = 1.5e0 * natm * kB * Temp;
@@ -55,7 +53,6 @@ int main() {
 	Output3(0, iopRun, natm, PBC, LBox, Rcut, Temp, tauT, dt, nstep, nout, Ebnd, ELJ, Eele, Ec, Temp, Pres, virial);
 	CPUtime0 = time(NULL);
 	t = 0e0;
-	std::cout << "started7\n";
 	WritePDB1(fileTrj, atoms, natm,Box, "w");
 	for (istep = 1; istep <= nstep; istep++) { // temporal loop
 		t += dt;

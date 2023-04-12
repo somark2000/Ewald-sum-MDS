@@ -361,3 +361,8 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/mdsim_trj.pdb
+/mdsim.psf
+/mdsim.pdb
+/mdsim.par
+/mdsim.dat
