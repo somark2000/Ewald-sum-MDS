@@ -366,3 +366,6 @@ FodyWeavers.xsd
 /mdsim.pdb
 /mdsim.par
 /mdsim.dat
+/CO_1000.psf
+/CO_27000.psf
+/mdsim.out
