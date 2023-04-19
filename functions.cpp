@@ -167,7 +167,7 @@ void Forces2(Atom atoms[], int natm, Pair pairs[], int npair, Bond bnds[], int n
 }
 
 // Returns the forces acting on atoms and the corresponding energies.
-void Forces3(Atom atoms[], int natm, Pair pairs[], int npair, Bond bnds[], int nbnd, int PBC, VecR3 Box, real Rcut, real& Ebnd, real& ELJ, real& Eele, real& virial) {
+void Forces3(Atom atoms[], int natm, Pair pairs[], int npair, Bond bnds[], int nbnd, int PBC, VecR3 Box, real Rcut, real &Ebnd, real &ELJ, real &Eele, real &virial) {
 	const real sqpi2 = 2e0 / sqrt(pi);
 	const real xmaxErfc = 4.e0;                                    // erfc cutoff
 	real Box2x, Box2y, Box2z;
@@ -183,7 +183,7 @@ void Forces3(Atom atoms[], int natm, Pair pairs[], int npair, Bond bnds[], int n
 	Box2x = Box.x / 2e0;                             // simulation box half-size
 	Box2y = Box.y / 2e0;
 	Box2z = Box.z / 2e0;
-	for (iatm = 1; iatm <= natm; iatm++) atoms[iatm].f = { 0e0, 0e0, 0e0 };
+	for (iatm = 0; iatm < natm; iatm++) atoms[iatm].f = { 0e0, 0e0, 0e0 };
 	// NON-BONDED INTERACTIONS
 	ELJ = 0e0;
 	Eele = 0e0;
@@ -430,25 +430,27 @@ void Verlet2(Atom atoms[], int natm, Pair pairs[], int npair, Bond bnds[], int n
 	Ekin *= fkin / 2e0;
 }
 
-void Verlet3(Atom atoms[], int natm, Pair pairs[], int npair, Bond bnds[], int nbnd, int PBC, VecR3 Box, real Rcut, real dt, real& Ebnd, real& ELJ, real& Eele, real& Ekin, real& virial) {
+void Verlet3(Atom atoms[], int natm, Pair pairs[], int npair, Bond bnds[], int nbnd, int PBC, VecR3 Box, real Rcut, real dt, real &Ebnd, real &ELJ, real &Eele, real &Ekin, real &virial) {
 	real Box2x, Box2y, Box2z, dt2, v2, dx, dy, dz;
 	int iatm;
+
 	dt2 = dt / 2e0;
-	Box2x = Box.x / 2e0; // simulation box ha If-size
+	Box2x = Box.x / 2e0;                              // simulation box half-size
 	Box2y = Box.y / 2e0;
 	Box2z = Box.z / 2e0;
-
-	//Predictor
+	// PREDICTOR STEP
 	for (iatm = 1; iatm <= natm; iatm++) {
-		atoms[iatm].v.x += dt2 * atoms[iatm].a.x;// v(t+dt/2)
+		atoms[iatm].v.x += dt2 * atoms[iatm].a.x;                     // v(t+dt/2)
 		atoms[iatm].v.y += dt2 * atoms[iatm].a.y;
 		atoms[iatm].v.z += dt2 * atoms[iatm].a.z;
-		atoms[iatm].r.x += dt * atoms[iatm].v.x;// r(t+dt)
+
+		atoms[iatm].r.x += dt * atoms[iatm].v.x;                        // r(t+dt)
 		atoms[iatm].r.y += dt * atoms[iatm].v.y;
 		atoms[iatm].r.z += dt * atoms[iatm].v.z;
 	}
-	if (PBC) { // wrap coordinates back into the box
-		for (iatm = 1; iatm <= natm; iatm++) { // keep residues together
+
+	if (PBC) {                              // wrap coordinates back into the box
+		for (iatm = 1; iatm <= natm; iatm++) {           // keep residues together
 			// first atom of the current residue
 			if (iatm == 1 || atoms[iatm].ires != atoms[iatm - 1].ires) {
 				dx = dy = dz = 0e0;
@@ -469,20 +471,21 @@ void Verlet3(Atom atoms[], int natm, Pair pairs[], int npair, Bond bnds[], int n
 	Forces3(atoms, natm, pairs, npair, bnds, nbnd, PBC, Box, Rcut, Ebnd, ELJ, Eele, virial);
 	// CORRECTOR STEP
 	Ekin = 0e0;
-	for (iatm = 1; iatm < natm; iatm++) {
-		atoms[iatm].a.x = facc * atoms[iatm].f.x / atoms[iatm].mass;
+	for (iatm = 1; iatm <= natm; iatm++) {
+		atoms[iatm].a.x = facc * atoms[iatm].f.x / atoms[iatm].mass;    // a(t+dt)
 		atoms[iatm].a.y = facc * atoms[iatm].f.y / atoms[iatm].mass;
 		atoms[iatm].a.z = facc * atoms[iatm].f.z / atoms[iatm].mass;
 
-		atoms[iatm].v.x += dt2 * atoms[iatm].a.x;
+		atoms[iatm].v.x += dt2 * atoms[iatm].a.x;                       // v(t+dt)
 		atoms[iatm].v.y += dt2 * atoms[iatm].a.y;
 		atoms[iatm].v.z += dt2 * atoms[iatm].a.z;
 
-		v2 = atoms[iatm].v.x * atoms[iatm].v.x +
+		v2 = atoms[iatm].v.x * atoms[iatm].v.x +               // squared velocity
 			atoms[iatm].v.y * atoms[iatm].v.y +
 			atoms[iatm].v.z * atoms[iatm].v.z;
 
-		atoms[iatm].beta = v2; // squared velocity for velocity distribution
+		atoms[iatm].beta = v2;                       // for velocity distributions
+
 		Ekin += atoms[iatm].mass * v2;
 	}
 	Ekin *= fkin / 2e0;
@@ -490,62 +493,71 @@ void Verlet3(Atom atoms[], int natm, Pair pairs[], int npair, Bond bnds[], int n
 
 //Resets the velocities and accelerations of all the atoms  to 0
 void ZeroVelAcc(Atom atoms[], int n) {
-	for (int i = 0; i < n; ++i) {
-		atoms[i].v = VecR3();
-		atoms[i].a = VecR3();
-		atoms[i].f = VecR3();
+	for (int i = 1; i <= n; ++i) {
+		atoms[i].v = { 0e0, 0e0, 0e0 };
+		atoms[i].a = { 0e0, 0e0, 0e0 };
+		atoms[i].f = { 0e0, 0e0, 0e0 };
 	}
 }
 
 //Rescales velocities to match total kinetic energy
 void Vrescal(Atom atoms[], int n, real Ec) {
-	real Ec0, f;
-	Ec0 = 0e0; // inițial kinetic energy
-	for (int i = 1; i <= n; ++i) {
-		Ec0 += atoms[i].mass * (atoms[i].v.x * atoms[i].v.x + atoms[i].v.y * atoms[i].v.y + atoms[i].v.z * atoms[i].v.z);
-		Ec0 *= fkin / 2e0;
-		f = sqrt(Ec / Ec0);
-		for (i = 1; i <= n; i++) { // rescale velocities
-			atoms[i].v.x *= f;
-			atoms[i].v.y *= f;
-			atoms[i].v.z *= f;
-		}
+	real Ekin0, f;
+	int iatm;
+
+	Ekin0 = 0e0;                                        // initial kinetic energy
+	for (iatm = 1; iatm <= n; iatm++) {
+		Ekin0 += atoms[iatm].mass * (atoms[iatm].v.x * atoms[iatm].v.x +
+			atoms[iatm].v.y * atoms[iatm].v.y +
+			atoms[iatm].v.z * atoms[iatm].v.z);
+	}
+	Ekin0 *= fkin / 2e0;
+
+	f = sqrt(Ec / Ekin0);
+	for (iatm = 1; iatm <= n; iatm++) {                  // rescale velocities
+		atoms[iatm].v.x *= f;
+		atoms[iatm].v.y *= f;
+		atoms[iatm].v.z *= f;
 	}
 }
 
 //Generates random velocities to match total kinetic energy
-void Heat(Atom atoms[], int n, real Ec) {
-	VecR3 vCM=VecR3();
+void Heat(Atom atoms[], int n, real &Ec) {
+	VecR3 vCM;
 	real mass, v, theta, phi;
-	for (int i = 1; i <= n; i++) { // generate random velocities
+	int iatm;
+
+	for (iatm = 1; iatm <+ n; iatm++) {          // generate random velocities
 		v = random();
 		theta = random() * pi;
 		phi = random() * pi * 2e0;
-		atoms[i].v.x = v * sin(theta) * cos(phi);
-		atoms[i].v.y = v * sin(theta) * sin(phi);
-		atoms[i].v.z = v * cos(theta);
+		atoms[iatm].v.x = v * sin(theta) * cos(phi);
+		atoms[iatm].v.y = v * sin(theta) * sin(phi);
+		atoms[iatm].v.z = v * cos(theta);
 	}
 
+	vCM = { 0e0, 0e0, 0e0 };                           // center-of-mass velocity
 	mass = 0e0;
-	for (int i = 1; i <= n; i++) {
-		vCM.x += atoms[i].mass * atoms[i].v.x;
-		vCM.y += atoms[i].mass * atoms[i].v.y;
-		vCM.z += atoms[i].mass * atoms[i].v.z;
-		mass += atoms[i].mass;
+	for (iatm = 1; iatm <= n; iatm++) {
+		vCM.x += atoms[iatm].mass * atoms[iatm].v.x;
+		vCM.y += atoms[iatm].mass * atoms[iatm].v.y;
+		vCM.z += atoms[iatm].mass * atoms[iatm].v.z;
+		mass += atoms[iatm].mass;
+	}
+	vCM.x /= mass; vCM.y /= mass; vCM.z /= mass;
+
+	for (iatm = 1; iatm <= n; iatm++) {                // subtract CM velocity
+		atoms[iatm].v.x -= vCM.x;
+		atoms[iatm].v.y -= vCM.y;
+		atoms[iatm].v.z -= vCM.z;
 	}
 
-	vCM.x /= mass; vCM.y /= mass; vCM.z /= mass;
-	for (int i = 1; i <= n; i++) { // subtract CM velocity
-		atoms[i].v.x -= vCM.x;
-		atoms[i].v.y -= vCM.y;
-		atoms[i].v.z -= vCM.z;
-		Vrescal(atoms, n, c);
-	}
+	Vrescal(atoms, n, Ec);
 }
 
 
 // Rescales velocities and total kinetic energy using the Berendsen thermostat
-void Thermostat(Atom atoms[], int natm, real Temp, real tauT, real dt, real& Ekin)
+void Thermostat(Atom atoms[], int natm, real Temp, real tauT, real dt, real &Ekin)
 {
 	real f, Tkin;
 	int iatm;

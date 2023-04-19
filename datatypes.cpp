@@ -2,17 +2,18 @@
 #include <string.h>
 #include <iostream>
 
+/*
 VecR3::VecR3()
 {
-	this->x = 0;
-	this->y = 0;
-	this->z = 0;
+	this->x = 0e0;
+	this->y = 0e0;
+	this->z = 0e0;
 }
 
-VecR3::VecR3(real x1, real y1, real z1) {
-	this->x = x1;
-	this->y = y1;
-	this->z = z1;
+VecR3::VecR3(real x, real y, real z) {
+	this->x = x;
+	this->y = y;
+	this->z = z;
 }
 
 VecR3::~VecR3()
@@ -26,13 +27,13 @@ Atom::Atom()
 	strcpy_s(this->type, "");
 	strcpy_s(this->resi, "");
 	strcpy_s(this->segm, "");
-	this->ires = 0;
-	this->mass = 0;
-	this->chrg = 0;
-	this->occp = 0;
-	this->beta = 0;
-	this->epsLJ = 0;
-	this->RminLJ = 0;
+	this->ires = 0L;
+	this->mass = 0e0;
+	this->chrg = 0e0;
+	this->occp = 0e0;
+	this->beta = 0e0;
+	this->epsLJ = 0e0;
+	this->RminLJ = 0e0;
 	this->r = VecR3();
 	this->v = VecR3();
 	this->a = VecR3();
@@ -86,9 +87,9 @@ Bond::Bond() {
 	this->indj = 0;
 	this->ityp = 0;
 	this->rigid = 0;
-	this->b0 = 0;
-	this->Kb = 0;
-	this->len = 0;
+	this->b0 = 0e0;
+	this->Kb = 0e0;
+	this->len = 0e0;
 	this->unit = VecR3();
 }
 Bond::Bond(char* atomi, char* atomj, int indi, int indj, int ityp, int rigid, real b0, real Kb, real len, VecR3 unit) {
@@ -106,3 +107,5 @@ Bond::Bond(char* atomi, char* atomj, int indi, int indj, int ityp, int rigid, re
 Bond::~Bond() {
 
 }
+*/
+

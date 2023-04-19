@@ -35,7 +35,8 @@ int GetDimPSF1(const char* file, int& nbnd)
 	psf = fopen(file, "r");
 	if (!psf) { printf("GetDimPSF1: input file missing!\n"); _getch(); exit(1); }
 
-	strcpy(line, "");                               // search for header "!NATOM"
+	strcpy(line, "");
+	// search for header "!NATOM"
 	while (!strstr(line, "!NATOM")) fgets(line, sizeof(line), psf);
 	sscanf(line, "%d", &natm);
 	// search for header "!NBOND"
@@ -154,29 +155,31 @@ void ReadPSF1(const char* file, Atom atoms[], int &natm, Bond bnds[], int &nbnd)
 	FILE* psf;
 	int iatm, ibnd, _natm, _nbnd;
 	char line[100];
-	psf = fopen(file, "r");	std::cout << "started\n";
-	if (!psf) { printf("ReadPSFl: input file missing!\n");  exit(1); }
-	strcpy(line, ""); // ATOMS - scan for header "!NATOM"
-	while (!strstr(line, "!NATOM")) fgets(line, sizeof(line), psf); // get lines
-	sscanf(line, "%d", &_natm);	std::cout << "started\n";
+
+	psf = fopen(file, "r");
+	if (!psf) { printf("ReadPSF1: input file missing!\n"); _getch(); exit(1); }
+
+	strcpy(line, "");                         // ATOMS - scan for header "!NATOM"
+	while (!strstr(line, "!NATOM")) fgets(line, sizeof(line), psf);  // get lines
+	sscanf(line, "%d", &_natm);
 	if (_natm != natm) {
-		printf("ReadPSFl: inconsistent natm I %i %i\n", natm, _natm); exit(2);
+		printf("ReadPSF1: inconsistent natm ! %i %i\n", natm, _natm); exit(2);
 	}
-	for (iatm = 1; iatm <= natm; iatm++) { // read a line for each atom
+	for (iatm = 1; iatm <= natm; iatm++) {           // read a line for each atom
 		fscanf(psf, "%*ld %s %ld %s %s %s %lf %lf %*d",
 			atoms[iatm].segm, &atoms[iatm].ires, atoms[iatm].resi,
 			atoms[iatm].name, atoms[iatm].type, &atoms[iatm].chrg,
 			&atoms[iatm].mass);
 	}
-
-	//BONDS
+	// BONDS
 	while (!strstr(line, "!NBOND")) fgets(line, sizeof(line), psf);
 	sscanf(line, "%d", &_nbnd);
 	if (_nbnd != nbnd) {
-		printf("ReadPSFl: inconsistent nbnd I %i %i\n", nbnd, _nbnd); exit(3);
+		printf("ReadPSF1: inconsistent nbnd ! %i %i\n", nbnd, _nbnd); exit(3);
 	}
 	for (ibnd = 1; ibnd <= nbnd; ibnd++)
 		fscanf(psf, "%d %d", &bnds[ibnd].indi, &bnds[ibnd].indj);
+
 	fclose(psf);
 }
 
@@ -252,7 +255,9 @@ void ReadPAR1(const char* file, Atom atoms[], int &natm, Bond bnds[], int &nbnd)
 			}
 		}
 		if (!found) {
-			printf("ReadPAR1: Bond parameters missing for %s-%s\n",	atoms[iatm].type, atoms[jatm].type); exit(1);
+			printf("ReadPAR1: Bond parameters missing for %s-%s\n",
+				atoms[iatm].type, atoms[jatm].type);
+			_getch(); exit(1);
 		}
 	}
 
@@ -277,7 +282,9 @@ void ReadPAR1(const char* file, Atom atoms[], int &natm, Bond bnds[], int &nbnd)
 			}
 		}
 		if (!found) {
-			printf("ReadPAR1: Nonbonded parameters missing for atom type %s\n",	atoms[iatm].type); exit(1);
+			printf("ReadPAR1: Nonbonded parameters missing for atom type %s\n",
+				atoms[iatm].type);
+			_getch(); exit(1);
 		}
 	}
 	fclose(par);
@@ -302,7 +309,7 @@ void Input(int &iopRun, double &Rcut, double &Temp, double &dt, int &nstep, int 
 void Input1(int &iopRun, int &PBC, real &Lbox, real &Rcut, real &Temp, real &tauT, real &dt, int &nstep, int &nout)
 {
 	FILE* in;
-	in = fopen("D:/Manuale/Sem 7/Info/Licenta/programe/Project1/mdsim.dat", "r");
+	in = fopen("C:/Users/smark/Documents/Uni/Licenta/Ewald-sum-MDS/mdsim.dat", "r");
 	if (in == NULL) { printf("MDsim.dat missing !\n"); _getch(); exit(1); }
 	int x=9;
 	fscanf(in, "%d", &iopRun);                                  // run type

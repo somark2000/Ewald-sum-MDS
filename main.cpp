@@ -12,18 +12,20 @@
 #include "ewald.h"
 
 int main() {
-	Atom* atoms = new Atom();
-	Bond* bnds = new Bond();
-	Pair* pairs = new Pair();
+	Atom *atoms;
+	Bond *bnds;
+	Pair *pairs;
 	VecR3 Box;
 	real dt = (double)0e0, ELJ, Ec, Ebnd, Eele, Rcut = (double)0e0, t, Temp = (double)0e0, Tkin = (double)0e0, LBox = (double)0e0, Pres = (double)0e0, tauT = (double)0e0, Vbox = (double)0e0, virial = (double)0e0;
 	int iopRun = 0, istep = 0, natm = 0, nstep = 0, nout=0, PBC=0, nbnd=0, npair=0;
 	real CPUtime = 0e0, CPUstep = 0e0, CPUleft = 0e0;
 	time_t CPUtime0;
-	const char* filePSF = "D:/Manuale/Sem 7/Info/Licenta/programe/Project1/mdsim.psf";
-	const char* filePDB = "D:/Manuale/Sem 7/Info/Licenta/programe/Project1/mdsim.pdb";
-	const char* filePAR = "D:/Manuale/Sem 7/Info/Licenta/programe/Project1/mdsim.par";
-	const char* fileTrj = "D:/Manuale/Sem 7/Info/Licenta/programe/Project1/mdsim_trj.pdb";
+	const char* filePSF = "C:/Users/smark/Documents/Uni/Licenta/Ewald-sum-MDS/mdsim.psf";
+	//const char* filePSF = "C:/Users/smark/Documents/Uni/Licenta/Ewald-sum-MDS/CO_1000.psf";
+	const char* filePDB = "C:/Users/smark/Documents/Uni/Licenta/Ewald-sum-MDS/mdsim.pdb";
+	//const char* filePDB = "C:/Users/smark/Documents/Uni/Licenta/Ewald-sum-MDS/CO_1000.pdb";
+	const char* filePAR = "C:/Users/smark/Documents/Uni/Licenta/Ewald-sum-MDS/mdsim.par";
+	const char* fileTrj = "C:/Users/smark/Documents/Uni/Licenta/Ewald-sum-MDS/mdsim_trj.pdb";
 	//Input(iopRun, Rcut, Temp, dt, nstep, nout);
 	Input1(iopRun, PBC, LBox, Rcut, Temp, tauT, dt, nstep, nout);
 	Box = { LBox, LBox, LBox };
@@ -31,7 +33,7 @@ int main() {
 	natm = GetDimPSF1(filePSF,nbnd);
 	atoms = Vec<Atom>(1, natm);
 	bnds = Vec<Bond>(1, nbnd);
-	// read data from PSF, PDB, and PAR files
+	// read data from PSF, PDB, and PAR filesp
 	ReadPSF1(filePSF, atoms, natm, bnds, nbnd);
 	ReadPDB0(filePDB, atoms, natm);
 	ReadPAR1(filePAR, atoms, natm, bnds, nbnd);
@@ -39,7 +41,7 @@ int main() {
 	pairs = Vec<Pair>(1, npair);
 	PairList0(atoms, natm, bnds, nbnd, pairs, npair);
 	// initialize system
-	ZeroVelAcc(atoms, natm); 
+	ZeroVelAcc(atoms, natm);
 	Ec = 1.5e0 * natm * kB * Temp;
 	Heat(atoms, natm, Ec); // heat up system to Temp
 	//Forces(atoms, natm, Rcut, ELJ);
@@ -74,7 +76,6 @@ int main() {
 			CPUtime = time(NULL) - CPUtime0;
 			CPUstep = CPUtime / istep;
 			CPUleft = (nstep - istep) * CPUstep;
-			std::cout << "started\n";
 			printf("CPU time used : % .2f left : % .2f sec \r", CPUtime, CPUleft);
 		}
 	}
